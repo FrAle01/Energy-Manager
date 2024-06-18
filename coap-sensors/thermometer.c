@@ -94,7 +94,7 @@ PROCESS_THREAD(thermometer_process, ev, data){
             LOG_INFO("Retry registration (%d/%d)\n", registration_retry_count, MAX_REGISTRATION_RETRY);
             registration_retry_count++;
             etimer_set(&temperature_timer, CLOCK_SECOND * 5); // Wait 5 seconds before retrying
-            PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&prediction_timer));
+            PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&temperature_timer));
         }
     }
 
@@ -103,8 +103,7 @@ PROCESS_THREAD(thermometer_process, ev, data){
         leds_off(LEDS_RED);
         leds_on(LEDS_GREEN);
         leds_single_off(LEDS_YELLOW);
-        write_samples();
-        printf(" a sample %f \n", samples[1].temperature);
+       
         printf("Activate server term\n");
         //LOG_INFO("Starting Erbium Example Server\n");
         

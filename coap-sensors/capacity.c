@@ -19,17 +19,17 @@
 #define GOOD_ACK 65
 #define MAX_SAMPLES 10
 
-extern coap_resource_t res_irradiance;
+extern coap_resource_t res_capacity;
 
 static int registration_retry_count = 0;
 static int registered = 0;
 static int shutdown=0;
 
-PROCESS(pyranometer_process, "Pyranometer Process");
-AUTOSTART_PROCESSES(&pyranometer_process);
 
-static struct etimer irradiance_timer;
-static struct etimer registration_timer;
+PROCESS(battery_process, "Battery Process");
+AUTOSTART_PROCESSES(&battery_process);
+
+static struct etimer capacity_timer;
 
 void client_chunk_handler(coap_message_t *response) {
 
@@ -55,7 +55,7 @@ void client_chunk_handler(coap_message_t *response) {
     }
 }
 
-PROCESS_THREAD(pyranometer_process, ev, data){
+PROCESS_THREAD(battery_process, ev, data){
 
     //button_hal_button_t *btn;
     static coap_endpoint_t server_ep;
@@ -79,7 +79,7 @@ PROCESS_THREAD(pyranometer_process, ev, data){
         coap_init_message(request, COAP_TYPE_CON, COAP_POST, 0);
         coap_set_header_uri_path(request, "/registrationSensor");
         
-        const char payload[] = "irradiance";
+        const char payload[] = "capacity";
         
         coap_set_payload(request, (uint8_t *)payload, strlen(payload)-1);
         
@@ -91,8 +91,8 @@ PROCESS_THREAD(pyranometer_process, ev, data){
         if (registered == 0) {
             LOG_INFO("Retry registration (%d/%d)\n", registration_retry_count, MAX_REGISTRATION_RETRY);
             registration_retry_count++;
-            etimer_set(&registration_timer, CLOCK_SECOND * 5); // Wait 5 seconds before retrying
-            PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&registration_timer));
+            etimer_set(&capacity_timer, CLOCK_SECOND * 5); // Wait 5 seconds before retrying
+            PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&capacity_timer));
         }
     }
 
@@ -101,17 +101,18 @@ PROCESS_THREAD(pyranometer_process, ev, data){
         leds_off(LEDS_RED);
         leds_on(LEDS_GREEN);
         leds_single_off(LEDS_YELLOW);
+
         printf("Activate server term\n");
         //LOG_INFO("Starting Erbium Example Server\n");
         
         // Activate resources
-        coap_activate_resource(&res_irradiance, "irradiance");
+        coap_activate_resource(&res_capacity, "capacity");
         coap_activate_resource(&res_shutdown, "shutdown");
 
         printf("CoAP server started\n");
 
         // Main loop
-        etimer_set(&irradiance_timer, CLOCK_SECOND * 2);
+        etimer_set(&capacity_timer, CLOCK_SECOND * 2);
    
 
         while (1) {
@@ -120,13 +121,13 @@ PROCESS_THREAD(pyranometer_process, ev, data){
             if(shutdown==1){
                 printf("Shutdown incremented\n");
             
-                process_exit(&pyranometer_process);
+                process_exit(&battery_process);
                 PROCESS_EXIT();
 
             }
-            if (etimer_expired(&irradiance_timer)) {
-                res_irradiance.trigger();
-                etimer_reset(&irradiance_timer);
+            if (etimer_expired(&capacity_timer)) {
+                res_capacity.trigger();
+                etimer_reset(&capacity_timer);
             }
             
         }
