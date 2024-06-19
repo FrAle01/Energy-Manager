@@ -14,41 +14,53 @@
 #endif
 
 /* Log configuration */
+
 #include "coap-log.h"
 #define LOG_MODULE "App"
 #define LOG_LEVEL  LOG_LEVEL_DBG
 
 #define SERVER_EP_TEMP "coap://[fd00::202:2:2:2]:5683"
-#define SERVER_EP_LPG  "coap://[fd00::1]:5683"
+#define SERVER_EP_IRR  "coap://[fd00::1]:5683"
+#define SERVER_EP_CAPACITY  "coap://[fd00::1]:5683"
+#define SERVER_EP_CONSUMPTION  "coap://[fd00::1]:5683"
 #define SERVER_EP_JAVA "coap://[fd00::1]:5683"
-
-#define CRITICAL_TEMP_VALUE 20
 
 #define REGISTRATION_ATTEMPTS 5
 #define REGISTRATION_DELAY 10 // in seconds
 
-static char* service_url_temp = "/predict-temp";
-static char* service_url_lpg = "/res-danger";
-static char* service_url_reg = "/registrationActuator";
-extern coap_resource_t res_tresh;
-extern coap_resource_t res_shutdown;
-static char ipv6temp[50];
+static char* service_url_temp = "/temperature";
+static char* service_url_irr = "/irradiance";
+static char* service_url_cap = "/capacity";
+static char* service_url_cons = "/consumption";
 
+static char* service_url_reg = "/registrationActuator";
+
+extern coap_resource_t res_batterytresh;
+
+static char temp_addr[50];
+static char irr_addr[50];
+static char cap_addr[50];
+static char cons_addr[50];
+
+static char ipv6temp[50];
 static char ipv6lpg[50];
+
 static int registration_attempts = 0;
 static int registered = 0;
-float temp_tresh=25;
-int nRisktemp=0;
-int nRisklpg=0;
+
+float battery_limit=100; // default battery limit to 100%
+
 PROCESS(coap_client_process, "CoAP Client Process");
 AUTOSTART_PROCESSES(&coap_client_process);
 static coap_observee_t *obs_temp = NULL;
-static coap_observee_t *obs_lpg = NULL;
+static coap_observee_t *obs_irr = NULL;
+static coap_observee_t *obs_cap = NULL;
+static coap_observee_t *obs_cons = NULL;
+
 static int lpgValue = 0;
 static int tempValue = 0;
-static int shutdown=0;
 
-void response_handler_LPG(coap_message_t *response) {
+void response_handler_IRR(coap_message_t *response) {
     if(response==NULL) {
         printf("No response received.\n");
         return;

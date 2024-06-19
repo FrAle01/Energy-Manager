@@ -109,8 +109,7 @@ PROCESS_THREAD(thermometer_process, ev, data){
         
         // Activate resources
         coap_activate_resource(&res_temperature, "temperature");
-        coap_activate_resource(&res_shutdown, "shutdown");
-
+        
         printf("CoAP server started\n");
 
         // Main loop
