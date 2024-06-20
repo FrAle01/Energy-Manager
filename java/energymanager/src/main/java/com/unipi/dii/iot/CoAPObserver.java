@@ -18,41 +18,43 @@ public class CoAPObserver implements Runnable {
     private String ipv6;
     
 
-    public CoAPObserver(String ip,String sensor) {
+    public CoAPObserver(String address,String sensor) {
        
-        // Crea il client CoAP
-        String uri = "coap://[" + ipv6 + "]:5683/monitoring";
+        // CoAP client constructor
+        String uri = "coap://[" + address + "]:5683/monitoring";
         client = new CoapClient(uri);
-        this.ipv6=ip;
+        this.ipv6=address;
         this.sensor=sensor;
     
 
     }
 
     public void startObserving() {
-        // Inizia l'osservazione della risorsa
+
+        // Start resource observation
         relation = client.observe(new CoapHandler() {
             @Override
-            public void onLoad(CoapResponse response) 
-            {
-                DatabaseManager dbManger= new DatabaseManager();
+            public void onLoad(CoapResponse response){
+                
+                DatabaseManager db = new DatabaseManager();
                 String content = response.getResponseText();
                 System.out.println("Notification: " + content);
                 JSONObject json= null;
+
                 try{
                    JSONParser parser = new JSONParser();
                    if(sensor.equals("temmperature")){
                     json = (JSONObject) parser.parse(content);
                     Long timeid=(Long) json.get("id");
                     JSONArray ssArray =(JSONArray) json.get("ss");
-                    dbManger.insertSensorTHERMOMETER("thermometer", ipv6, ssArray);
+                    db.insertSensorTHERMOMETER("thermometer", ipv6, ssArray);
                    }
                    else if(sensor.equals("lpgSensor")) {
                     json = (JSONObject) parser.parse(content);
                     if (json.containsKey("ss")) {
                         Long timeid = (Long) json.get("id");
                         JSONArray ssArray = (JSONArray) json.get("ss");
-                        dbManger.insertSensorLPG("lpgSensor", ipv6,ssArray, timeid);
+                        db.insertSensorLPG("lpgSensor", ipv6,ssArray, timeid);
                     } else {
                         System.out.println("Il JSON non contiene 'ss'");
                     }
