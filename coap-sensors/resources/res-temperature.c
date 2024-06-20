@@ -4,6 +4,7 @@
 #include <time.h>
 #include "coap-engine.h"
 #include "math.h"
+#include "utils/timestamp.h"
 
 /* Log configuration */
 #include "sys/log.h"
@@ -27,7 +28,7 @@ static double curr_temperature = 0;
 static void res_event_handler(void)
 {
   curr_temperature = 0;
-  LOG_INFO("Payload to be sent: {\"sensor\":\"temperature\", \"value\":%.2f}\n", curr_temperature);
+  LOG_INFO("Payload to be sent: {\"sensor\":\"temperature\", \"value\":%.2f, \"ts\":%s}\n", curr_temperature, get_timestamp());
   coap_notify_observers(&res_temperature);
 }
 

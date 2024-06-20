@@ -4,6 +4,7 @@
 #include <time.h>
 #include "coap-engine.h"
 #include "math.h"
+#include "utils/timestamp.h"
 
 /* Log configuration */
 #include "sys/log.h"
@@ -28,7 +29,7 @@ static double curr_perc_capacity = 0;
 static void res_event_handler(void)
 {
   curr_perc_capacity = 0; // random % between 0 and 100
-  LOG_INFO("Payload to be sent: {\"sensor\":\"capacity\", \"value\":%.2f}\n", curr_perc_capacity);
+  LOG_INFO("Payload to be sent: {\"sensor\":\"capacity\", \"value\":%.2f, \"ts\":%s}\n", curr_perc_capacity, get_timestamp());
   coap_notify_observers(&res_capacity);
 }
 

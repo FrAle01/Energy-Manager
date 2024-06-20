@@ -104,27 +104,56 @@ void response_handler_TEMP(coap_message_t *response) {
    // printf("Temperature Response: |%s| (Parsed: %.2f)\n", temp_str, tempValue);
 }
 
-void handle_notification_temp(struct coap_observee_s *observee, void *notification, coap_notification_flag_t flag) {
+void handle_notification(struct coap_observee_s *observee, void *notification, coap_notification_flag_t flag) {
     coap_message_t *msg = (coap_message_t *)notification;
-    if (msg) {
-        printf("Received temperature notification\n");
-        response_handler_TEMP(msg);
-        process_poll(&coap_client_process); // Poll the main process to handle the event
-    } else {
-        printf("No temperature notification received\n");
+    int len = 0;
+    const uint8_t *payload = NULL;
+
+    if (notification){
+      len = coap_get_payload(notification, &payload);
+    }
+    switch (flag){
+
+    case NOTIFICATION_OK:
+        LOG_INFO("NOTIFICATION OK: %*s\n", len, (char *)payload);
+
+        char *sensor = json_parse_string((char *)payload, "sensor");
+        double value = json_parse_number((char *)payload, "value");
+        char *timestamp = json_parse_string((char *)payload, "ts");
+
+
+      // verify if the values are valid: sesnor must not be null and value must be greater than 0
+        if (sensor == NULL || value < 0 || timestamp == NULL)
+        {
+          LOG_INFO("Invalid sensor, value or timestamp\n");
+          return;
+        }
+
+        // call a function to handle the store of the value
+        save_value(sensor, value, timestamp);
+
+        break;
+
+    case OBSERVE_OK:
+        LOG_INFO("OBSERVE_OK: %*s\n", len, (char *)payload);
+        break;
+    case OBSERVE_NOT_SUPPORTED:
+        LOG_INFO("OBSERVE_NOT_SUPPORTED: %*s\n", len, (char *)payload);
+        obs = NULL;
+        break;
+    case ERROR_RESPONSE_CODE:
+        LOG_INFO("ERROR_RESPONSE_CODE: %*s\n", len, (char *)payload);
+        obs = NULL;
+        break;
+    case NO_REPLY_FROM_SERVER:
+        LOG_INFO("NO_REPLY_FROM_SERVER: "
+                 "removing observe registration with token %x%x\n",
+                 obs->token[0], obs->token[1]);
+        obs = NULL;
+        break;
     }
 }
 
-void handle_notification_lpg(struct coap_observee_s *observee, void *notification, coap_notification_flag_t flag) {
-    coap_message_t *msg = (coap_message_t *)notification;
-    if (msg) {
-        printf("Received LPG notification\n");
-        response_handler_LPG(msg);
-        process_poll(&coap_client_process); // Poll the main process to handle the event
-    } else {
-        printf("No LPG notification received\n");
-    }
-}
 
 void registration_handler(coap_message_t *response) {
     if (response == NULL) {
@@ -200,15 +229,7 @@ PROCESS_THREAD(coap_client_process, ev, data) {
 
     if (registered) {
 
-        if(lpgValue==3)
-        {
-            leds_toggle(LEDS_RED);
-        }
-        if(etimer_expired(&red_timer))
-        {
-            leds_toggle(LEDS_RED);
-            etimer_reset(&red_timer);
-        }
+        
 
 
         static coap_endpoint_t server_ep_temp;
@@ -225,10 +246,10 @@ PROCESS_THREAD(coap_client_process, ev, data) {
         coap_endpoint_parse(addr_lpg, strlen(addr_lpg), &server_ep_lpg);
 
         printf("Sending observation request to %s\n", addr_temp);
-        obs_temp=coap_obs_request_registration(&server_ep_temp, service_url_temp, handle_notification_temp, NULL);
+        obs_temp=coap_obs_request_registration(&server_ep_temp, service_url_temp, handle_notification, NULL);
 
         printf("Sending observation request to %s\n", addr_lpg);
-        obs_lpg=coap_obs_request_registration(&server_ep_lpg, service_url_lpg, handle_notification_lpg, NULL);
+        obs_lpg=coap_obs_request_registration(&server_ep_lpg, service_url_lpg, handle_notification, NULL);
         coap_activate_resource(&res_tresh, "threshold");
         coap_activate_resource(&res_shutdown, "shutdown");
 

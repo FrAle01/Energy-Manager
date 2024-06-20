@@ -111,7 +111,7 @@ PROCESS_THREAD(battery_process, ev, data){
         printf("CoAP server started\n");
 
         // Main loop
-        etimer_set(&capacity_timer, CLOCK_SECOND * 2);
+        etimer_set(&capacity_timer, CLOCK_SECOND * 3);
    
 
         while (1) {
