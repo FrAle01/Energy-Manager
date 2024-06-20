@@ -7,6 +7,8 @@
 #include "coap-blocking-api.h"
 #include "sys/etimer.h"
 #include "leds.h"
+#include "utils/my_json.h"
+
 #if PLATFORM_SUPPORTS_BUTTON_HAL
 #include "dev/button-hal.h"
 #else
@@ -19,11 +21,8 @@
 #define LOG_MODULE "App"
 #define LOG_LEVEL  LOG_LEVEL_DBG
 
-#define SERVER_EP_TEMP "coap://[fd00::202:2:2:2]:5683"
-#define SERVER_EP_IRR  "coap://[fd00::1]:5683"
-#define SERVER_EP_CAPACITY  "coap://[fd00::1]:5683"
-#define SERVER_EP_CONSUMPTION  "coap://[fd00::1]:5683"
-#define SERVER_EP_JAVA "coap://[fd00::1]:5683"
+
+#define SERVER_EP "coap://[fd00::1]:5683"
 
 #define REGISTRATION_ATTEMPTS 5
 #define REGISTRATION_DELAY 10 // in seconds
@@ -42,9 +41,6 @@ static char irr_addr[50];
 static char cap_addr[50];
 static char cons_addr[50];
 
-static char ipv6temp[50];
-static char ipv6lpg[50];
-
 static int registration_attempts = 0;
 static int registered = 0;
 
@@ -52,13 +48,14 @@ float battery_limit=100; // default battery limit to 100%
 
 PROCESS(coap_client_process, "CoAP Client Process");
 AUTOSTART_PROCESSES(&coap_client_process);
+
+
 static coap_observee_t *obs_temp = NULL;
 static coap_observee_t *obs_irr = NULL;
 static coap_observee_t *obs_cap = NULL;
 static coap_observee_t *obs_cons = NULL;
 
-static int lpgValue = 0;
-static int tempValue = 0;
+
 
 void response_handler_IRR(coap_message_t *response) {
     if(response==NULL) {
@@ -168,34 +165,27 @@ void registration_handler(coap_message_t *response) {
     printf("Registration payload: %s\n", payload);
 
     // Assume payload contains IPv6 addresses in JSON format
-    cJSON *json = cJSON_Parse(payload);
-    if (json == NULL) {
-        const char *error_ptr = cJSON_GetErrorPtr();
-        if (error_ptr != NULL) {
-            fprintf(stderr, "JSON parsing error: %s\n", error_ptr);
-        }
-        return;
-    }
+    
 
-    cJSON *ipv6temp_item = cJSON_GetObjectItemCaseSensitive(json, "t");
-    cJSON *ipv6lpg_item = cJSON_GetObjectItemCaseSensitive(json, "l");
+    char *temp_ip = json_parse_string(payload, "temp");
+    char *irr_ip = json_parse_string(payload, "irr");
+    char *cap_ip = json_parse_string(payload, "cap");
+    char *cons_ip = json_parse_string(payload, "cons");
 
 
 
-    if (cJSON_IsString(ipv6temp_item) && cJSON_IsString(ipv6lpg_item)) {
+    if (temp_ip != NULL && irr_ip != NULL && cap_ip != NULL && cons_ip != NULL) {
         char full_ipv6temp[50];
         char full_ipv6lpg[50];
         snprintf(full_ipv6temp, sizeof(full_ipv6temp), "fd00:0:0:0:%s", ipv6temp_item->valuestring);
-        snprintf(full_ipv6lpg, sizeof(full_ipv6lpg), "fd00:0:0:0:%s", ipv6lpg_item->valuestring);
-
+ù
         strncpy(ipv6temp, full_ipv6temp, sizeof(ipv6temp) - 1);
         ipv6temp[sizeof(ipv6temp) - 1] = '\0';
 
         strncpy(ipv6lpg, full_ipv6lpg, sizeof(ipv6lpg) - 1);
         ipv6lpg[sizeof(ipv6lpg) - 1] = '\0';
 
-        printf("Registered IPv6temp: %s\n", ipv6temp);
-        printf("Registered IPv6lpg: %s\n", ipv6lpg);
+        printf("Registered IPv6temp: %s\n", temp_addr);
 
         registered = 1;
     } else {
@@ -206,11 +196,11 @@ void registration_handler(coap_message_t *response) {
 
 PROCESS_THREAD(coap_client_process, ev, data) {
     PROCESS_BEGIN();
-    static coap_endpoint_t server_ep_java;
+    static coap_endpoint_t server_ep;
     static coap_message_t request[1];
     static struct etimer registration_timer;
 
-    coap_endpoint_parse(SERVER_EP_JAVA, strlen(SERVER_EP_JAVA), &server_ep_java);
+    coap_endpoint_parse(SERVER_EP, strlen(SERVER_EP), &server_ep);
 
     while (registration_attempts < REGISTRATION_ATTEMPTS && !registered) {
         coap_init_message(request, COAP_TYPE_CON, COAP_POST, 0);
@@ -218,7 +208,7 @@ PROCESS_THREAD(coap_client_process, ev, data) {
         coap_set_payload(request, (uint8_t *)"actuator", strlen("actuator"));
 
         printf("Sending registration request...\n");
-        COAP_BLOCKING_REQUEST(&server_ep_java, request, registration_handler);
+        COAP_BLOCKING_REQUEST(&server_ep, request, registration_handler);
 
         if (!registered) {
             registration_attempts++;
@@ -233,40 +223,63 @@ PROCESS_THREAD(coap_client_process, ev, data) {
 
 
         static coap_endpoint_t server_ep_temp;
-        static coap_endpoint_t server_ep_lpg;
+        static coap_endpoint_t server_ep_irr;
+        static coap_endpoint_t server_ep_cap;
+        static coap_endpoint_t server_ep_cons;
 
-        char addr_temp[100] = "coap://[";
-        char addr_lpg[100] = "coap://[";
-        strcat(addr_temp, ipv6temp);
-        strcat(addr_temp, "]:5683");
-        strcat(addr_lpg, ipv6lpg);
-        strcat(addr_lpg, "]:5683");
 
-        coap_endpoint_parse(addr_temp, strlen(addr_temp), &server_ep_temp);
-        coap_endpoint_parse(addr_lpg, strlen(addr_lpg), &server_ep_lpg);
+        char uri_temp[100];
+        char uri_irr[100];
+        char uri_cap[100];
+        char uri_cons[100];
 
-        printf("Sending observation request to %s\n", addr_temp);
-        obs_temp=coap_obs_request_registration(&server_ep_temp, service_url_temp, handle_notification, NULL);
+        snprintf(uri_temp, sizeof(uri_temp), "coap://[%s]:5683", temp_addr);
+        snprintf(uri_irr, sizeof(uri_irr), "coap://[%s]:5683", irr_addr);
+        snprintf(uri_cap, sizeof(uri_cap), "coap://[%s]:5683", cap_addr);
+        snprintf(uri_cons, sizeof(uri_cons), "coap://[%s]:5683", cons_addr);
 
-        printf("Sending observation request to %s\n", addr_lpg);
-        obs_lpg=coap_obs_request_registration(&server_ep_lpg, service_url_lpg, handle_notification, NULL);
-        coap_activate_resource(&res_tresh, "threshold");
-        coap_activate_resource(&res_shutdown, "shutdown");
+
+        coap_endpoint_parse(uri_temp, strlen(uri_temp), &server_ep_temp);
+        coap_endpoint_parse(uri_lpg, strlen(uri_lpg), &server_ep_lpg);
+
+        printf("Sending observation request to %s\n", uri_temp);
+        obs_temp =coap_obs_request_registration(&server_ep_temp, service_url_temp, handle_notification, NULL);
+
+        printf("Sending observation request to %s\n", uri_irr);
+        obs_irr =coap_obs_request_registration(&server_ep_irr, service_url_irr, handle_notification, NULL);
+
+        printf("Sending observation request to %s\n", uri_cap);
+        obs_cap =coap_obs_request_registration(&server_ep_cap, service_url_cap, handle_notification, NULL);
+
+        printf("Sending observation request to %s\n", uri_cons);
+        obs_cons =coap_obs_request_registration(&server_ep_cons, service_url_cons, handle_notification, NULL);
+
+
+        coap_activate_resource(&res_batterylimit, "batterylimit");
 
         etimer_set(&main_timer, CLOCK_SECOND * 2);
         //shutdown=0;
         while (1) {
             PROCESS_WAIT_EVENT();
-            if(temp_tresh==-1 || shutdown==1){
+
+            if(temp_tresh==-1 || shutdown==1){ // set a shutdown event
                 shutdown=1;
                 printf("Shutdown incremented\n");
-                temp_tresh=25;
-                 if (obs_temp != NULL) {
+
+                if (obs_temp != NULL) {
                    coap_obs_remove_observee(obs_temp);
                 }
-                if (obs_lpg != NULL) {
-                    coap_obs_remove_observee(obs_lpg);
+                if (obs_irr != NULL) {
+                   coap_obs_remove_observee(obs_irr);
                 }
+                if (obs_cap != NULL) {
+                   coap_obs_remove_observee(obs_cap);
+                }
+                if (obs_cons != NULL) {
+                   coap_obs_remove_observee(obs_cons);
+                }
+                
+                
                 process_exit(&coap_client_process);
                 PROCESS_EXIT();
 
