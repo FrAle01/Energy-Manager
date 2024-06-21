@@ -6,8 +6,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
 
 
 
@@ -58,7 +56,7 @@ public class DatabaseManager{
     public void insertAddress(String address, String type, String name) {
         createAddressTable();
         
-        String insertSQL = "INSERT INTO ipv6_addresses (address, type, name) VALUES (?, ?, ?)";
+        String insertSQL = "INSERT INTO addresses (address, type, name) VALUES (?, ?, ?)";
 
         try {
             Connection conn = getConnection();
@@ -72,24 +70,100 @@ public class DatabaseManager{
         }
     }
 
-    public List<String> fetchAddresses() {
-        List<String> ipAddresses = new ArrayList<>();
-        String querySQL = "SELECT address FROM ipv6_addresses";
+    public void createSensorTable(String sensor, String address){
+        address = address.replace(":", "");
+
+        String tableName = sensor.toLowerCase() + "_" + address; 
+
+        String createTableSQL = "CREATE TABLE IF NOT EXISTS " + tableName + " ("
+            + "id INT AUTO_INCREMENT, " 
+            + "timestamp VARCHAR(20) NOT NULL, "
+            + "sensor VARCHAR(50) NOT NULL, "
+            + "value DOUBLE NOT NULL" 
+            + "PRIMARY KEY (id)) ";
 
         try{
             Connection conn = getConnection();
             Statement stmt = conn.createStatement();
-            ResultSet resultSet = stmt.executeQuery(querySQL);
+            stmt.execute(createTableSQL);
 
-            while (resultSet.next()) {
-                String address = resultSet.getString("address");
-                ipAddresses.add(address);
-            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
 
-        return ipAddresses;
+    public boolean elementRegistered(String element, String address){
+        String querySQL =   "SELECT *" +
+                            "FROM addresses" +
+                            "WHERE name = ? AND address = ?";
+
+        try{
+            Connection conn = getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(querySQL);
+            pstmt.setString(1, element);
+            pstmt.setString(2, address);
+            ResultSet resultSet = pstmt.executeQuery();
+
+            if (resultSet.next()){  // sensor already exists
+                return true;
+            }else{
+                return false;
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }     
+    }
+
+    public boolean  insertSensorValue(String sensor, String address, Double value, String ts){
+
+        address = address.replace(":", "");
+        String tableName = sensor +"_"+  address;
+        
+        String insertSQL = "INSERT INTO "+tableName+ " (timestamp, sensor, value) VALUES (?, ?, ?)";
+
+        try {
+            Connection conn = getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(insertSQL);
+            pstmt.setString(1, ts);
+            pstmt.setString(2, sensor);
+            pstmt.setDouble(3, value);
+            pstmt.executeUpdate();
+            return true;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean allSensorsOnline(){
+        String querySQL =   "SELECT *" +
+                            "FROM addresses" +
+                            "WHERE type = 'sensor'";
+
+        int sensorsOnline = 0;
+        try{
+            Connection conn = getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(querySQL);
+            ResultSet resultSet = pstmt.executeQuery();
+
+            if (resultSet.next()){  // sensor already exists
+                do {
+                    sensorsOnline++;
+                } while (resultSet.next());
+
+                return (sensorsOnline >= 4);
+                 
+            }else{
+                return false;
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }   
     }
 
     public static void deleteDB() {

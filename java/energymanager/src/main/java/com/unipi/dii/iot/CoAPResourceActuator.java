@@ -1,13 +1,16 @@
 package com.unipi.dii.iot;
 
 import org.eclipse.californium.core.CoapResource;
+import org.eclipse.californium.core.coap.CoAP;
+import org.eclipse.californium.core.coap.Response;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 
 public class CoAPResourceActuator extends CoapResource{
 
+    DatabaseManager db = new DatabaseManager();
+
     public CoAPResourceActuator(String name){
         super(name);
-        // setObservable(true);
     }
 
     @Override
@@ -17,7 +20,16 @@ public class CoAPResourceActuator extends CoapResource{
 
     @Override
     public void handlePOST(CoapExchange exchange){
+        
+        if(!db.allSensorsOnline()){
 
+            System.out.println("NOT ALL SENSORS REGISTERED YET!");
+            Response response = new Response(CoAP.ResponseCode.BAD_REQUEST);
+            exchange.respond(response);
+            return;
+        }        
+        
+        System.out.println("POST ACTUATOR received");
     }
 
 }
