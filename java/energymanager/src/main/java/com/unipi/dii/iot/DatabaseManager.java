@@ -77,7 +77,7 @@ public class DatabaseManager{
 
         String createTableSQL = "CREATE TABLE IF NOT EXISTS " + tableName + " ("
             + "id INT AUTO_INCREMENT, " 
-            + "timestamp TIMESTAMP DEFAULT NULL, "
+            + "timestamp VARCHAR(20) NOT NULL, "
             + "sensor VARCHAR(50) NOT NULL, "
             + "value DOUBLE NOT NULL" 
             + "PRIMARY KEY (id)) ";
@@ -114,6 +114,28 @@ public class DatabaseManager{
             e.printStackTrace();
             return false;
         }     
+    }
+
+    public boolean  insertSensorValue(String sensor, String address, Double value, String ts){
+
+        address = address.replace(":", "");
+        String tableName = sensor +"_"+  address;
+        
+        String insertSQL = "INSERT INTO "+tableName+ " (timestamp, sensor, value) VALUES (?, ?, ?)";
+
+        try {
+            Connection conn = getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(insertSQL);
+            pstmt.setString(1, ts);
+            pstmt.setString(2, sensor);
+            pstmt.setDouble(3, value);
+            pstmt.executeUpdate();
+            return true;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public boolean allSensorsOnline(){

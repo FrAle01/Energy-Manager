@@ -9,6 +9,8 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
+import com.mysql.cj.xdevapi.JsonArray;
+
 
 public class CoAPObserver implements Runnable {
 
@@ -42,23 +44,20 @@ public class CoAPObserver implements Runnable {
                 JSONObject json= null;
 
                 try{
-                   JSONParser parser = new JSONParser();
-                   if(sensor.equals("temmperature")){
+                    JSONParser parser = new JSONParser();
                     json = (JSONObject) parser.parse(content);
-                    Long timeid=(Long) json.get("id");
-                    JSONArray ssArray =(JSONArray) json.get("ss");
-                    db.insertSensorTHERMOMETER("thermometer", ipv6, ssArray);
-                   }
-                   else if(sensor.equals("lpgSensor")) {
-                    json = (JSONObject) parser.parse(content);
-                    if (json.containsKey("ss")) {
-                        Long timeid = (Long) json.get("id");
-                        JSONArray ssArray = (JSONArray) json.get("ss");
-                        db.insertSensorLPG("lpgSensor", ipv6,ssArray, timeid);
-                    } else {
-                        System.out.println("Il JSON non contiene 'ss'");
+
+                    String sensing =(String) json.get("sensor");
+                    String ts =(String) json.get("ts");
+                    Double value =(Double) json.get("value");
+                    
+                    Boolean added = db.insertSensorValue(sensing, ipv6, value, ts);
+
+                    if(added){
+                        System.out.println("Sensor"+sensing+"new value ("+value+") inserted");
+                    }else{
+                        System.err.println("Failed to insert new value");
                     }
-                }
 
                 } catch (Exception e) {
                     e.printStackTrace();
