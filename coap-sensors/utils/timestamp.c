@@ -12,6 +12,7 @@ static char* get_timestamp(){
 
     time(&raw);
     ts = localtime(&raw);
-    sprintf(arg, "%02d-%02d-%d_%02d:%02d:%02d", (*ts).tm_mday, (*ts).tm_mon, (*ts).tm_year+1900, (*ts).tm_hour, (*ts).tm_min, (*ts).tm_sec);
+    // format YYYY-MM-DD_HH:MM:SS
+    sprintf(arg, "%d-%02d-%02d_%02d:%02d:%02d", (*ts).tm_year+1900, (*ts).tm_mon, (*ts).tm_mday, (*ts).tm_hour, (*ts).tm_min, (*ts).tm_sec);
     return arg;
 }

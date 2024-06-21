@@ -76,11 +76,11 @@ public class DatabaseManager{
         String tableName = sensor.toLowerCase() + "_" + address; 
 
         String createTableSQL = "CREATE TABLE IF NOT EXISTS " + tableName + " ("
-            + "id INT AUTO_INCREMENT, " 
-            + "timestamp VARCHAR(20) NOT NULL, "
-            + "sensor VARCHAR(50) NOT NULL, "
-            + "value DOUBLE NOT NULL" 
-            + "PRIMARY KEY (id)) ";
+                                    + "id INT AUTO_INCREMENT, " 
+                                    + "timestamp VARCHAR(20) NOT NULL, "
+                                    + "sensor VARCHAR(50) NOT NULL, "
+                                    + "value DOUBLE NOT NULL" 
+                                    + "PRIMARY KEY (id)) ";
 
         try{
             Connection conn = getConnection();

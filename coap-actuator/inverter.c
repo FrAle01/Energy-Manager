@@ -120,15 +120,13 @@ void handle_notification(struct coap_observee_s *observee, void *notification, c
 
 
       // verify if the values are valid: sesnor must not be null and value must be greater than 0
-        if (sensor == NULL || value < 0 || timestamp == NULL)
-        {
+        if (sensor == NULL || value < 0 || timestamp == NULL){
           LOG_INFO("Invalid sensor, value or timestamp\n");
           return;
         }
 
         // call a function to handle the store of the value
         save_value(sensor, value, timestamp);
-
         break;
 
     case OBSERVE_OK:
@@ -240,7 +238,9 @@ PROCESS_THREAD(coap_client_process, ev, data) {
 
 
         coap_endpoint_parse(uri_temp, strlen(uri_temp), &server_ep_temp);
-        coap_endpoint_parse(uri_lpg, strlen(uri_lpg), &server_ep_lpg);
+        coap_endpoint_parse(uri_irr, strlen(uri_irr), &server_ep_irr);
+        coap_endpoint_parse(uri_cap, strlen(uri_cap), &server_ep_cap);
+        coap_endpoint_parse(uri_cons, strlen(uri_cons), &server_ep_cons);
 
         printf("Sending observation request to %s\n", uri_temp);
         obs_temp =coap_obs_request_registration(&server_ep_temp, service_url_temp, handle_notification, NULL);
