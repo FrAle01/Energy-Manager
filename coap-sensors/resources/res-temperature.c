@@ -4,7 +4,7 @@
 #include <time.h>
 #include "coap-engine.h"
 #include "math.h"
-#include "utils/timestamp.h"
+#include "../utils/timestamp.h"
 
 /* Log configuration */
 #include "sys/log.h"
@@ -24,18 +24,20 @@ EVENT_RESOURCE(res_temperature,
                res_event_handler);
 
 static double curr_temperature = 0;
+static char ts[20];
 
 static void res_event_handler(void)
 {
   curr_temperature = 0;
-  LOG_INFO("Payload to be sent: {\"sensor\":\"temperature\", \"value\":%.2f, \"ts\":%s}\n", curr_temperature, get_timestamp());
+  get_timestamp(ts);
+  LOG_INFO("Payload to be sent: {\"sensor\":\"temperature\", \"value\":%.2f, \"ts\":%s}\n", curr_temperature, ts);
   coap_notify_observers(&res_temperature);
 }
 
 static void res_get_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
 {
   coap_set_header_content_format(response, APPLICATION_JSON);
-  int payload_len = snprintf((char *)buffer, preferred_size, "{\"sensor\":\"temperature\", \"value\":%.2f}", curr_temperature);
+  int payload_len = snprintf((char *)buffer, preferred_size, "{\"sensor\":\"temperature\", \"value\":%.2f, \"ts\":%s}\n", curr_temperature, ts);
   coap_set_payload(response, buffer, payload_len);
 
   LOG_INFO("Payload: %s\n", buffer);

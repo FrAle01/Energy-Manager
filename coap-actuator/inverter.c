@@ -7,7 +7,13 @@
 #include "coap-blocking-api.h"
 #include "sys/etimer.h"
 #include "leds.h"
+
 #include "utils/my_json.h"
+#include "utils/queue_manager.h"
+#include "utils/timestamp_module.h"
+
+#include "IoTmodel.h"
+
 
 #if PLATFORM_SUPPORTS_BUTTON_HAL
 #include "dev/button-hal.h"
@@ -45,6 +51,7 @@ static int registration_attempts = 0;
 static int registered = 0;
 
 float battery_limit=100; // default battery limit to 100%
+#define MAX_CAPACITY 12
 
 PROCESS(coap_client_process, "CoAP Client Process");
 AUTOSTART_PROCESSES(&coap_client_process);
@@ -55,50 +62,29 @@ static coap_observee_t *obs_irr = NULL;
 static coap_observee_t *obs_cap = NULL;
 static coap_observee_t *obs_cons = NULL;
 
+static Queue temp_queue;
+static Queue irr_queue;
+static Queue cap_queue;
+static Queue cons_queue;
 
 
-void response_handler_IRR(coap_message_t *response) {
-    if(response==NULL) {
-        printf("No response received.\n");
-        return;
+
+void save_value(char *sensor, double value, char* timestamp){
+
+    if(strcmp(sensor, "temperature") == 0){
+        addToQueue(&temp_queue, value, timestamp);
+
+    }else if (strcmp(sensor, "irradiance") == 0){
+        addToQueue(&irr_queue, value, timestamp);
+
+    }else if (strcmp(sensor, "irradiance") == 0){
+        addToQueue(&cap_queue, value, timestamp);
+
+    }else if (strcmp(sensor, "irradiance") == 0){
+        addToQueue(&cons_queue, value, timestamp);
+
     }
-
-    const uint8_t *chunk;
-    int len = coap_get_payload(response, &chunk);
-    printf("|%.*s\n", len, (char *)chunk);
-   
-
-    int value = atoi((char *)chunk);
-    lpgValue = value;
-    printf("lpg valore: %d \n",value);
-    if(lpgValue == 1) {
-        printf("lpg is normal\n");
-        leds_on(LEDS_GREEN);
-    } else if(lpgValue == 2) {
-        printf("lpg is dangerous\n");
-        leds_on(LEDS_RED);
-    } else if(lpgValue == 3) {
-        nRisklpg++;
-        printf("lpg is critical\n");
-        leds_on(LEDS_RED);
-    } else {
-        printf("lpg is unknown\n");
-    }
-}
-
-void response_handler_TEMP(coap_message_t *response) {
-    printf("response_handler\n");
-    if(response == NULL) {
-        printf("No response received.\n");
-        return;
-    }
-    const uint8_t *chunk;
-    int len = coap_get_payload(response, &chunk);
-    char temp_str[len + 1];
-    strncpy(temp_str, (char *)chunk, len);
-    temp_str[len] = '\0';
-    tempValue = atof(temp_str);
-   // printf("Temperature Response: |%s| (Parsed: %.2f)\n", temp_str, tempValue);
+    
 }
 
 void handle_notification(struct coap_observee_s *observee, void *notification, coap_notification_flag_t flag) {
@@ -225,7 +211,6 @@ PROCESS_THREAD(coap_client_process, ev, data) {
         static coap_endpoint_t server_ep_cap;
         static coap_endpoint_t server_ep_cons;
 
-
         char uri_temp[100];
         char uri_irr[100];
         char uri_cap[100];
@@ -235,7 +220,6 @@ PROCESS_THREAD(coap_client_process, ev, data) {
         snprintf(uri_irr, sizeof(uri_irr), "coap://[%s]:5683", irr_addr);
         snprintf(uri_cap, sizeof(uri_cap), "coap://[%s]:5683", cap_addr);
         snprintf(uri_cons, sizeof(uri_cons), "coap://[%s]:5683", cons_addr);
-
 
         coap_endpoint_parse(uri_temp, strlen(uri_temp), &server_ep_temp);
         coap_endpoint_parse(uri_irr, strlen(uri_irr), &server_ep_irr);
@@ -257,37 +241,74 @@ PROCESS_THREAD(coap_client_process, ev, data) {
 
         coap_activate_resource(&res_batterylimit, "batterylimit");
 
-        etimer_set(&main_timer, CLOCK_SECOND * 2);
+        etimer_set(&actuator_timer, CLOCK_SECOND * 2);
         //shutdown=0;
         while (1) {
             PROCESS_WAIT_EVENT();
 
-            if(temp_tresh==-1 || shutdown==1){ // set a shutdown event
-                shutdown=1;
-                printf("Shutdown incremented\n");
-
-                if (obs_temp != NULL) {
-                   coap_obs_remove_observee(obs_temp);
-                }
-                if (obs_irr != NULL) {
-                   coap_obs_remove_observee(obs_irr);
-                }
-                if (obs_cap != NULL) {
-                   coap_obs_remove_observee(obs_cap);
-                }
-                if (obs_cons != NULL) {
-                   coap_obs_remove_observee(obs_cons);
-                }
-                
-                
-                process_exit(&coap_client_process);
-                PROCESS_EXIT();
-
-            }
-            if (ev == PROCESS_EVENT_TIMER && etimer_expired(&main_timer)) {
+            if (ev == PROCESS_EVENT_TIMER && etimer_expired(&actuator_timer)) {
                 process_poll(&coap_client_process);
-                etimer_reset(&main_timer);
+                etimer_reset(&actuator_timer);
+            
+                if(fullQueue(&temp_queue) && fullQueue(&irr_queue) && fullQueue(&cap_queue) && fullQueue(&cons_queue)){
+                    
+                    float temp_value = getWMean(&temp_queue, 0.8);
+                    float irr_value = getWMean(&irr_queue, 0.8);
 
+                    float battery_cap = getHead(&cap_queue);
+                    float house_consumption = getHead(&cons_queue);
+
+
+                    char newest_ts = getRecentTS(&temp_queue, &irr_queue, &cap_queue, &cons_queue);
+
+                    float day = extractDay(newest_ts);
+                    float month = extractMonth(newest_ts);
+                    float hour = extractHour(newest_ts);
+
+                    float features[5] = {irr_value, temp_value, hour, day, month};
+
+                    float panel_production = IoTmodel_regress1(features, 5);
+
+                    float energy_to_house = 0;
+                    float energy_to_battery = 0;
+                    float energy_to_sell = 0;
+
+                    if (panel_production > house_consumption){
+                        
+                        energy_to_house = house_consumption;
+                        panel_production -= house_consumption;
+
+                        if(battery_cap >= battery_limit){
+                            
+                            energy_to_battery = 0;
+                            energy_to_sell = panel_production; 
+
+                        }else{
+                            
+                            energy_to_battery = (battery_limit-battery_cap)*(MAX_CAPACITY/100);
+                            if(panel_production > energy_to_battery){
+                                panel_production -= energy_to_battery;
+                                energy_to_sell = panel_production;
+                                panel_production = 0;
+                            }else{
+                                energy_to_battery = panel_production;
+                                panel_production = 0;
+                                energy_to_sell = 0;
+                            }
+
+                        }
+
+                    }else{
+                        energy_to_house = panel_production;
+                        panel_production = 0;
+                        energy_to_battery = 0;
+                        energy_to_sell = 0;
+                    }
+                    
+                }
+            
+            
+            
             }
         }
        

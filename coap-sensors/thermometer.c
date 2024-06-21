@@ -14,19 +14,15 @@
 #define LOG_LEVEL LOG_LEVEL_APP
 
 #define SERVER_EP "coap://[fd00::1]:5683"
-#define TIME_SAMPLE 5
 #define MAX_REGISTRATION_RETRY 3
 #define GOOD_ACK 65
-#define MAX_SAMPLES 10
 
 extern coap_resource_t res_temperature;
 
 static int registration_retry_count = 0;
 static int registered = 0;
 static int shutdown=0;
-// Array to store the samples
-static int sample_count = 0; // Number of samples stored
-Sample samples[MAX_SAMPLES];
+
 
 PROCESS(thermometer_process, "Thermometer Process");
 AUTOSTART_PROCESSES(&thermometer_process);

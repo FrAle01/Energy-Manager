@@ -23,7 +23,6 @@ extern coap_resource_t res_irradiance;
 
 static int registration_retry_count = 0;
 static int registered = 0;
-static int shutdown=0;
 
 PROCESS(pyranometer_process, "Pyranometer Process");
 AUTOSTART_PROCESSES(&pyranometer_process);
@@ -97,7 +96,6 @@ PROCESS_THREAD(pyranometer_process, ev, data){
     }
 
     if (registered == 1) {
-        //shutdown=0;
         leds_off(LEDS_RED);
         leds_on(LEDS_GREEN);
         leds_single_off(LEDS_YELLOW);
@@ -106,7 +104,6 @@ PROCESS_THREAD(pyranometer_process, ev, data){
         
         // Activate resources
         coap_activate_resource(&res_irradiance, "irradiance");
-        coap_activate_resource(&res_shutdown, "shutdown");
 
         printf("CoAP server started\n");
 
@@ -117,13 +114,7 @@ PROCESS_THREAD(pyranometer_process, ev, data){
         while (1) {
 
             PROCESS_YIELD();
-            if(shutdown==1){
-                printf("Shutdown incremented\n");
             
-                process_exit(&pyranometer_process);
-                PROCESS_EXIT();
-
-            }
             if (etimer_expired(&irradiance_timer)) {
                 res_irradiance.trigger();
                 etimer_reset(&irradiance_timer);
@@ -131,7 +122,6 @@ PROCESS_THREAD(pyranometer_process, ev, data){
             
         }
         // mando notifica a tutti di spegnere
-        printf("shutdown  %i\n", shutdown);
 
         
 

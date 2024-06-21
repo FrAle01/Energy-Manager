@@ -1,4 +1,4 @@
-CONTIKI_PROJECT = pyranometer thermometer capacity
+CONTIKI_PROJECT = pyranometer thermometer capacity energy_meter
 
 all: $(CONTIKI_PROJECT)
 
@@ -7,6 +7,8 @@ PLATFORMS_EXCLUDE = sky z1
 
 # Include CoAP resources
 MODULES_REL += ./resources
+MODULES_REL += ./utils
+
 
 CONTIKI=../../..
 
@@ -15,7 +17,6 @@ include $(CONTIKI)/Makefile.dir-variables
 MODULES += $(CONTIKI_NG_APP_LAYER_DIR)/coap
 
 # Add the utils directory
-MODULES_REL += ./resources/utils
 
 LDLIBS += -lm
 
