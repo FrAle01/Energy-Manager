@@ -63,9 +63,9 @@ float getHead(Queue* q){
     return q->values[q->head];
 }
 
-const char* getRecentTS(Queue* q0, Queue* q1, Queue* q2, Queue* q3){
+void getRecentTS(char* arg, Queue* q0, Queue* q1, Queue* q2, Queue* q3){
 
-    return recentTS(q0->ts[q0->head], q1->ts[q1->head], q2->ts[q2->head], q3->ts[q3->head]);
+    recentTS(arg, q0->ts[q0->head], q1->ts[q1->head], q2->ts[q2->head], q3->ts[q3->head]);
 
 }
 

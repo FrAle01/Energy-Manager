@@ -6,7 +6,7 @@ all: $(CONTIKI_PROJECT)
 PLATFORMS_EXCLUDE = sky z1
 
 # Include CoAP resources
-MODULES_REL += ./resources
+# MODULES_REL += ./resources
 
 CONTIKI=../../..
 
@@ -18,7 +18,13 @@ MODULES += $(CONTIKI_NG_APP_LAYER_DIR)/coap
 MODULES_REL += ./utils
 MODULES_REL += ./model
 
+TARGET_LIBFILES += -lm
 
-LDLIBS += -lm
+CFLAGS = -Wno-unused-variable
+
+MODULES_REL+=/home/iot_ubuntu_intel/.local/lib/python3.10/site-packages/emlearn
+INC+=/home/iot_ubuntu_intel/.local/lib/python3.10/site-packages/emlearn
+
+
 
 include $(CONTIKI)/Makefile.include

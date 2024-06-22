@@ -68,66 +68,66 @@ PROCESS_THREAD(pyranometer_process, ev, data){
         pressed=1;
         PROCESS_YIELD();
     
-    coap_endpoint_parse(SERVER_EP, strlen(SERVER_EP), &server_ep);
-    while (registration_retry_count < MAX_REGISTRATION_RETRY && registered == 0) {
-        // Initialize POST request
+        coap_endpoint_parse(SERVER_EP, strlen(SERVER_EP), &server_ep);
+        while (registration_retry_count < MAX_REGISTRATION_RETRY && registered == 0) {
+            // Initialize POST request
             leds_on(LEDS_RED);
-        leds_single_on(LEDS_YELLOW);
-
-        coap_init_message(request, COAP_TYPE_CON, COAP_POST, 0);
-        coap_set_header_uri_path(request, "/registrationSensor");
-        
-        const char payload[] = "irradiance";
-        
-        coap_set_payload(request, (uint8_t *)payload, strlen(payload)-1);
-        
-
-        printf("Sending the registration request\n");
-        // Send the blocking request
-        COAP_BLOCKING_REQUEST(&server_ep, request, client_chunk_handler);
-
-        if (registered == 0) {
-            LOG_INFO("Retry registration (%d/%d)\n", registration_retry_count, MAX_REGISTRATION_RETRY);
-            registration_retry_count++;
-            etimer_set(&registration_timer, CLOCK_SECOND * 5); // Wait 5 seconds before retrying
-            PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&registration_timer));
-        }
-    }
-
-    if (registered == 1) {
-        leds_off(LEDS_RED);
-        leds_on(LEDS_GREEN);
-        leds_single_off(LEDS_YELLOW);
-        printf("Activate server term\n");
-        //LOG_INFO("Starting Erbium Example Server\n");
-        
-        // Activate resources
-        coap_activate_resource(&res_irradiance, "irradiance");
-
-        printf("CoAP server started\n");
-
-        // Main loop
-        etimer_set(&irradiance_timer, CLOCK_SECOND * 3);
-   
-
-        while (1) {
-
-            PROCESS_YIELD();
+            leds_single_on(LEDS_YELLOW);
+    
+            coap_init_message(request, COAP_TYPE_CON, COAP_POST, 0);
+            coap_set_header_uri_path(request, "/registrationSensor");
             
-            if (etimer_expired(&irradiance_timer)) {
-                res_irradiance.trigger();
-                etimer_reset(&irradiance_timer);
+            const char payload[] = "irradiance";
+            
+            coap_set_payload(request, (uint8_t *)payload, strlen(payload)-1);
+            
+    
+            printf("Sending the registration request\n");
+            // Send the blocking request
+            COAP_BLOCKING_REQUEST(&server_ep, request, client_chunk_handler);
+    
+            if (registered == 0) {
+                LOG_INFO("Retry registration (%d/%d)\n", registration_retry_count, MAX_REGISTRATION_RETRY);
+                registration_retry_count++;
+                etimer_set(&registration_timer, CLOCK_SECOND * 5); // Wait 5 seconds before retrying
+                PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&registration_timer));
             }
-            
         }
-
-        
-
-    } else {
-        printf("Reached maximum number of registration attempts\n");
-    }
-
-} 
+    
+        if (registered == 1) {
+            leds_off(LEDS_RED);
+            leds_on(LEDS_GREEN);
+            leds_single_off(LEDS_YELLOW);
+            printf("Activate server term\n");
+            //LOG_INFO("Starting Erbium Example Server\n");
+            
+            // Activate resources
+            coap_activate_resource(&res_irradiance, "irradiance");
+    
+            printf("CoAP server started\n");
+    
+            // Main loop
+            etimer_set(&irradiance_timer, CLOCK_SECOND * 3);
+    
+    
+            while (1) {
+            
+                PROCESS_YIELD();
+                
+                if (etimer_expired(&irradiance_timer)) {
+                    res_irradiance.trigger();
+                    etimer_reset(&irradiance_timer);
+                }
+                
+            }
+    
+            
+    
+        } else {
+            printf("Reached maximum number of registration attempts\n");
+        }
+    
+    } 
 
 
     PROCESS_END();

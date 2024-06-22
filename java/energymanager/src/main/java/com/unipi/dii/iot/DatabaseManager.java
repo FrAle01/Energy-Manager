@@ -6,6 +6,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 
 
@@ -164,6 +166,46 @@ public class DatabaseManager{
             e.printStackTrace();
             return false;
         }   
+    }
+
+    public class SensorIp{
+        
+        String name;
+        String address;
+
+        public SensorIp(String name, String address){
+            this.name = name;
+            this.address = address;
+        }
+    }
+
+    public List<SensorIp> getSensorAddress(){
+
+        List<SensorIp> list = new ArrayList<>();  
+
+        String querySQL =   "SELECT name, address" +
+                            "FROM addresses" +
+                            "WHERE type = 'sensor'";
+                    
+        try{
+            Connection conn = getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(querySQL);
+            ResultSet resultSet = pstmt.executeQuery();
+
+            while(resultSet.next()){
+                SensorIp sensor = new SensorIp(resultSet.getString("name"), resultSet.getString("address"));
+                list.add(sensor);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } 
+        
+        if(list.size() == 4){
+            return list;
+        }else{
+            list.clear();
+            return list;
+        }
     }
 
     public static void deleteDB() {

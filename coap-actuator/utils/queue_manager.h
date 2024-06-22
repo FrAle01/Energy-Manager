@@ -17,7 +17,7 @@ void addToQueue(Queue*, double, char*);
 int fullQueue(Queue*);
 float getWMean(Queue*, float);
 float getHead(Queue*);
-float getRecentTS(Queue*, Queue*, Queue*, Queue*);
+void getRecentTS(char*, Queue*, Queue*, Queue*, Queue*);
 
 
 #endif
