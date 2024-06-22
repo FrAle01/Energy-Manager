@@ -17,13 +17,11 @@
 #define TIME_SAMPLE 5
 #define MAX_REGISTRATION_RETRY 3
 #define GOOD_ACK 65
-#define MAX_SAMPLES 10
 
 extern coap_resource_t res_consumption;
 
 static int registration_retry_count = 0;
 static int registered = 0;
-static int shutdown=0;
 
 
 PROCESS(energy_process, "Energy meter Process");
@@ -70,34 +68,33 @@ PROCESS_THREAD(energy_process, ev, data){
         pressed=1;
         PROCESS_YIELD();
     
-    coap_endpoint_parse(SERVER_EP, strlen(SERVER_EP), &server_ep);
-    while (registration_retry_count < MAX_REGISTRATION_RETRY && registered == 0) {
+        coap_endpoint_parse(SERVER_EP, strlen(SERVER_EP), &server_ep);
+        while (registration_retry_count < MAX_REGISTRATION_RETRY && registered == 0){
         // Initialize POST request
-        leds_on(LEDS_RED);
-        leds_single_on(LEDS_YELLOW);
+            leds_on(LEDS_RED);
+            leds_single_on(LEDS_YELLOW);
 
-        coap_init_message(request, COAP_TYPE_CON, COAP_POST, 0);
-        coap_set_header_uri_path(request, "/registrationSensor");
-        
-        const char payload[] = "energy_consumption";
-        
-        coap_set_payload(request, (uint8_t *)payload, strlen(payload)-1);
-        
+            coap_init_message(request, COAP_TYPE_CON, COAP_POST, 0);
+            coap_set_header_uri_path(request, "/registrationSensor");
 
-        printf("Sending the registration request\n");
-        // Send the blocking request
-        COAP_BLOCKING_REQUEST(&server_ep, request, client_chunk_handler);
+            const char payload[] = "consumption";
 
-        if (registered == 0) {
-            LOG_INFO("Retry registration (%d/%d)\n", registration_retry_count, MAX_REGISTRATION_RETRY);
-            registration_retry_count++;
-            etimer_set(&energy_timer, CLOCK_SECOND * 5); // Wait 5 seconds before retrying
-            PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&energy_timer));
+            coap_set_payload(request, (uint8_t *)payload, strlen(payload)-1);
+
+
+            printf("Sending the registration request\n");
+            // Send the blocking request
+            COAP_BLOCKING_REQUEST(&server_ep, request, client_chunk_handler);
+
+            if (registered == 0) {
+                LOG_INFO("Retry registration (%d/%d)\n", registration_retry_count, MAX_REGISTRATION_RETRY);
+                registration_retry_count++;
+                etimer_set(&energy_timer, CLOCK_SECOND * 5); // Wait 5 seconds before retrying
+                PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&energy_timer));
+            }
         }
-    }
 
     if (registered == 1) {
-        //shutdown=0;
         leds_off(LEDS_RED);
         leds_on(LEDS_GREEN);
         leds_single_off(LEDS_YELLOW);
@@ -117,21 +114,13 @@ PROCESS_THREAD(energy_process, ev, data){
         while (1) {
 
             PROCESS_YIELD();
-            if(shutdown==1){
-                printf("Shutdown incremented\n");
             
-                process_exit(&energy_process);
-                PROCESS_EXIT();
-
-            }
-            if (etimer_expired(&energy_timer)) {
+            if (etimer_expired(&energy_timer)){
                 res_consumption.trigger();
                 etimer_reset(&energy_timer);
             }
             
         }
-        // mando notifica a tutti di spegnere
-        printf("shutdown  %i\n", shutdown);
 
         
 

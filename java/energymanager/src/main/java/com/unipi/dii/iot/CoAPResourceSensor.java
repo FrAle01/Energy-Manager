@@ -51,10 +51,10 @@ public class CoAPResourceSensor extends CoapResource{
                 observertThread.start();
                 
                
-        } else {
-            System.err.println("Failed sensor registration");
-            response = new Response(CoAP.ResponseCode.BAD_REQUEST);
-        }
+                } else {
+                    System.err.println("Failed sensor registration");
+                    response = new Response(CoAP.ResponseCode.BAD_REQUEST);
+                }
         } catch (Exception e) {
             System.err.println("Error inserting sensor IP in the database: " + e.getMessage());
             exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR, "generic error");

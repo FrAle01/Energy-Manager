@@ -17,13 +17,11 @@
 #define TIME_SAMPLE 5
 #define MAX_REGISTRATION_RETRY 3
 #define GOOD_ACK 65
-#define MAX_SAMPLES 10
 
 extern coap_resource_t res_capacity;
 
 static int registration_retry_count = 0;
 static int registered = 0;
-static int shutdown=0;
 
 
 PROCESS(battery_process, "Battery Process");
@@ -97,7 +95,6 @@ PROCESS_THREAD(battery_process, ev, data){
     }
 
     if (registered == 1) {
-        //shutdown=0;
         leds_off(LEDS_RED);
         leds_on(LEDS_GREEN);
         leds_single_off(LEDS_YELLOW);
@@ -117,22 +114,13 @@ PROCESS_THREAD(battery_process, ev, data){
         while (1) {
 
             PROCESS_YIELD();
-            if(shutdown==1){
-                printf("Shutdown incremented\n");
             
-                process_exit(&battery_process);
-                PROCESS_EXIT();
-
-            }
             if (etimer_expired(&capacity_timer)) {
                 res_capacity.trigger();
                 etimer_reset(&capacity_timer);
             }
             
         }
-        // mando notifica a tutti di spegnere
-        printf("shutdown  %i\n", shutdown);
-
         
 
     } else {

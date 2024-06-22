@@ -5,11 +5,8 @@ import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapHandler;
 import org.eclipse.californium.core.CoapObserveRelation;
 import org.eclipse.californium.core.CoapResponse;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-
-import com.mysql.cj.xdevapi.JsonArray;
 
 
 public class CoAPObserver implements Runnable {
@@ -23,7 +20,7 @@ public class CoAPObserver implements Runnable {
     public CoAPObserver(String address,String sensor) {
        
         // CoAP client constructor
-        String uri = "coap://[" + address + "]:5683/monitoring";
+        String uri = "coap://[" + address + "]:5683/"+ sensor;
         client = new CoapClient(uri);
         this.ipv6=address;
         this.sensor=sensor;

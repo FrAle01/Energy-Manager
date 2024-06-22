@@ -32,14 +32,14 @@ static void res_event_handler(void)
 {
   curr_irradiance = 0;
   get_timestamp(ts);
-  LOG_INFO("Payload to be sent: {\"sensor\":\"irradiance\", \"value\":%.2f, \"ts\":%s}\n", curr_irradiance, ts);
+  LOG_INFO("Payload to be sent: {\"sensor\":\"irradiance\", \"value\":%.2f, \"ts\":\"%s\"}\n", curr_irradiance, ts);
   coap_notify_observers(&res_irradiance);
 }
 
 static void res_get_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
 {
   coap_set_header_content_format(response, APPLICATION_JSON);
-  int payload_len = snprintf((char *)buffer, preferred_size, "{\"sensor\":\"irradiance\", \"value\":%.2f, \"ts\":%s}\n", curr_irradiance, ts);
+  int payload_len = snprintf((char *)buffer, preferred_size, "{\"sensor\":\"irradiance\", \"value\":%.2f, \"ts\":\"%s\"}\n", curr_irradiance, ts);
   coap_set_payload(response, buffer, payload_len);
 
   LOG_INFO("Payload: %s\n", buffer);

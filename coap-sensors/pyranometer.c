@@ -17,7 +17,6 @@
 #define TIME_SAMPLE 5
 #define MAX_REGISTRATION_RETRY 3
 #define GOOD_ACK 65
-#define MAX_SAMPLES 10
 
 extern coap_resource_t res_irradiance;
 
@@ -121,7 +120,6 @@ PROCESS_THREAD(pyranometer_process, ev, data){
             }
             
         }
-        // mando notifica a tutti di spegnere
 
         
 

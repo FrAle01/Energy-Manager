@@ -21,7 +21,6 @@ extern coap_resource_t res_temperature;
 
 static int registration_retry_count = 0;
 static int registered = 0;
-static int shutdown=0;
 
 
 PROCESS(thermometer_process, "Thermometer Process");
@@ -71,7 +70,7 @@ PROCESS_THREAD(thermometer_process, ev, data){
     coap_endpoint_parse(SERVER_EP, strlen(SERVER_EP), &server_ep);
     while (registration_retry_count < MAX_REGISTRATION_RETRY && registered == 0) {
         // Initialize POST request
-            leds_on(LEDS_RED);
+        leds_on(LEDS_RED);
         leds_single_on(LEDS_YELLOW);
 
         coap_init_message(request, COAP_TYPE_CON, COAP_POST, 0);
@@ -95,7 +94,6 @@ PROCESS_THREAD(thermometer_process, ev, data){
     }
 
     if (registered == 1) {
-        //shutdown=0;
         leds_off(LEDS_RED);
         leds_on(LEDS_GREEN);
         leds_single_off(LEDS_YELLOW);
@@ -115,13 +113,7 @@ PROCESS_THREAD(thermometer_process, ev, data){
         while (1) {
 
             PROCESS_YIELD();
-            if(shutdown==1){
-                printf("Shutdown incremented\n");
             
-                process_exit(&thermometer_process);
-                PROCESS_EXIT();
-
-            }
             if (etimer_expired(&temperature_timer)) {
                 res_temperature.trigger();
                 etimer_reset(&temperature_timer);
@@ -129,7 +121,6 @@ PROCESS_THREAD(thermometer_process, ev, data){
             
         }
         // mando notifica a tutti di spegnere
-        printf("shutdown  %i\n", shutdown);
 
         
 

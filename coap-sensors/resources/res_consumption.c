@@ -32,14 +32,14 @@ static void res_event_handler(void)
 {
   curr_consumption = 0;
   get_timestamp(ts);
-  LOG_INFO("Payload to be sent: {\"sensor\":\"consumption\", \"value\":%.2f, \"ts\":%s\n}\n", curr_consumption, ts);
+  LOG_INFO("Payload to be sent: {\"sensor\":\"consumption\", \"value\":%.2f, \"ts\":\"%s\"\n}\n", curr_consumption, ts);
   coap_notify_observers(&res_consumption);
 }
 
 static void res_get_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
 {
   coap_set_header_content_format(response, APPLICATION_JSON);
-  int payload_len = snprintf((char *)buffer, preferred_size, "{\"sensor\":\"consumption\", \"value\":%.2f, \"ts\":%s\n}\n", curr_consumption, ts);
+  int payload_len = snprintf((char *)buffer, preferred_size, "{\"sensor\":\"consumption\", \"value\":%.2f, \"ts\":\"%s\"\n}\n", curr_consumption, ts);
   coap_set_payload(response, buffer, payload_len);
 
   LOG_INFO("Payload: %s\n", buffer);
