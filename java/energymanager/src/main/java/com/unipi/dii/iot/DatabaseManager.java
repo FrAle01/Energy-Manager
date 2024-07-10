@@ -94,6 +94,30 @@ public class DatabaseManager{
         }
     }
 
+    public void createActuatorTable(String actuator, String address){
+        address = address.replace(":", "");
+
+        String tableName = actuator.toLowerCase() + "_" + address; 
+
+        String createTableSQL = "CREATE TABLE IF NOT EXISTS " + tableName + " ("
+                                    + "id INT AUTO_INCREMENT, " 
+                                    + "timestamp VARCHAR(20) NOT NULL, "
+                                    + "produced DOUBLE NOT NULL" 
+                                    + "home DOUBLE NOT NULL" 
+                                    + "battery DOUBLE NOT NULL" 
+                                    + "grid DOUBLE NOT NULL" 
+                                    + "PRIMARY KEY (id)) ";
+
+        try{
+            Connection conn = getConnection();
+            Statement stmt = conn.createStatement();
+            stmt.execute(createTableSQL);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     public boolean elementRegistered(String element, String address){
         String querySQL =   "SELECT *" +
                             "FROM addresses" +
@@ -131,6 +155,30 @@ public class DatabaseManager{
             pstmt.setString(1, ts);
             pstmt.setString(2, sensor);
             pstmt.setDouble(3, value);
+            pstmt.executeUpdate();
+            return true;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean  insertFlowValues(String actuator, String address, Double produced, Double home, Double battery, Double grid, String ts){
+
+        address = address.replace(":", "");
+        String tableName = actuator +"_"+  address;
+        
+        String insertSQL = "INSERT INTO "+tableName+ " (timestamp, produced, home, battery, grid) VALUES (?, ?, ?, ?, ?)";
+
+        try {
+            Connection conn = getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(insertSQL);
+            pstmt.setString(1, ts);
+            pstmt.setDouble(2, produced);
+            pstmt.setDouble(3, home);
+            pstmt.setDouble(4, battery);
+            pstmt.setDouble(5, grid);
             pstmt.executeUpdate();
             return true;
 

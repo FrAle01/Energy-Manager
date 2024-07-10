@@ -17,6 +17,7 @@ public class CoAPResourceActuator extends CoapResource{
 
     public CoAPResourceActuator(String name){
         super(name);
+        setObservable(true);
     }
 
     @Override
@@ -70,6 +71,7 @@ public class CoAPResourceActuator extends CoapResource{
 
                     System.out.println("Inserting ACTUATOR IP in db " + ipAddress);
                     db.insertAddress(addrWithoutSlash, "actuator", actuator);
+                    db.createActuatorTable(actuator, addrWithoutSlash);
 
                     System.out.println("actuator IP REGISTERED!");
 
@@ -90,6 +92,13 @@ public class CoAPResourceActuator extends CoapResource{
                     response = new Response(CoAP.ResponseCode.CREATED);
                     response.setPayload(responseJson.toJSONString());
                     exchange.respond(response);
+                    
+
+                    // strarting observer for energyflow
+                    System.out.println("Starting observer client for energy flow");  
+                    final CoAPObserver observerClient = new CoAPObserver(ipAddress, "energyflow");
+                    Thread observertThread=new Thread(observerClient);
+                    observertThread.start();
 
 
                 } catch (Exception e) {

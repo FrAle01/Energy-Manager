@@ -45,7 +45,7 @@ public class CoAPResourceSensor extends CoapResource{
                 System.out.println("success\n");
                 // Start the CoAP observer client
                 
-                System.out.println("Starting observer client for " );  
+                System.out.println("Starting observer client for "+ sensor);  
                 final CoAPObserver observerClient = new CoAPObserver(ipAddress,sensor);
                 Thread observertThread=new Thread(observerClient);
                 observertThread.start();

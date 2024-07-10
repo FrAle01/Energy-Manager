@@ -74,11 +74,14 @@ static Queue irr_queue;
 static Queue cap_queue;
 static Queue cons_queue;
 
-float panel_production;
+float panel_production = 0;
 
-float energy_to_house;
-float energy_to_battery;
-float energy_to_sell;
+float energy_to_house = 0;
+float energy_to_battery = 0;
+float energy_to_sell = 0;
+
+char newest_ts[20] = "00-00-0000_00:00:00";
+
 
 
 
@@ -292,7 +295,6 @@ PROCESS_THREAD(coap_client_process, ev, data) {
                         float house_consumption = getHead(&cons_queue);
 
 
-                        char newest_ts[20];
                         getRecentTS(newest_ts, &temp_queue, &irr_queue, &cap_queue, &cons_queue);
 
                         float day = extractDay(newest_ts);

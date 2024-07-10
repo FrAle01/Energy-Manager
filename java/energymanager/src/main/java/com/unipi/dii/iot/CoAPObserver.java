@@ -13,17 +13,17 @@ public class CoAPObserver implements Runnable {
 
     private CoapClient client;
     private  CoapObserveRelation relation;
-    private String sensor;
+    private String resource;
     private String ipv6;
     
 
-    public CoAPObserver(String address,String sensor) {
+    public CoAPObserver(String address,String resource) {
        
         // CoAP client constructor
-        String uri = "coap://[" + address + "]:5683/"+ sensor;
+        String uri = "coap://[" + address + "]:5683/"+ resource;
         client = new CoapClient(uri);
         this.ipv6=address;
-        this.sensor=sensor;
+        this.resource=resource;
     
 
     }
@@ -40,24 +40,50 @@ public class CoAPObserver implements Runnable {
                 System.out.println("Notification: " + content);
                 JSONObject json= null;
 
-                try{
-                    JSONParser parser = new JSONParser();
-                    json = (JSONObject) parser.parse(content);
+                if(resource.equals("energyflow")){
+                    try{
+                        JSONParser parser = new JSONParser();
+                        json = (JSONObject) parser.parse(content);
+    
+                        Double produced =(Double) json.get("produced");
+                        Double to_home =(Double) json.get("home");
+                        Double to_battery =(Double) json.get("battery");
+                        Double to_grid =(Double) json.get("sold");
+                        String ts = (String) json.get("ts");
 
-                    String sensing =(String) json.get("sensor");
-                    Double value =(Double) json.get("value");
-                    String ts =(String) json.get("ts");
-                    
-                    Boolean added = db.insertSensorValue(sensing, ipv6, value, ts);
-
-                    if(added){
-                        System.out.println("Sensor"+sensing+"new value ("+value+") inserted");
-                    }else{
-                        System.err.println("Failed to insert new value");
+                        
+                        Boolean added = db.insertFlowValues("inverter", ipv6, produced, to_home, to_battery, to_grid, ts);
+    
+                        if(added){
+                            System.out.println("Energy flow new values (production: "+ produced +", home: "+ to_home +", battery: "+ to_battery +", grid: "+ to_grid+") inserted");
+                        }else{
+                            System.err.println("Failed to insert new flow");
+                        }
+    
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
+                }else{
 
-                } catch (Exception e) {
-                    e.printStackTrace();
+                    try{
+                        JSONParser parser = new JSONParser();
+                        json = (JSONObject) parser.parse(content);
+    
+                        String sensing =(String) json.get("sensor");
+                        Double value =(Double) json.get("value");
+                        String ts =(String) json.get("ts");
+                        
+                        Boolean added = db.insertSensorValue(sensing, ipv6, value, ts);
+    
+                        if(added){
+                            System.out.println("Sensor"+sensing+"new value ("+value+") inserted");
+                        }else{
+                            System.err.println("Failed to insert new value");
+                        }
+    
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
               
             }

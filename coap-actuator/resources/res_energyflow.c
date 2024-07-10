@@ -19,6 +19,7 @@ extern float panel_production;
 extern float energy_to_house;
 extern float energy_to_battery;
 extern float energy_to_sell;
+extern char newest_ts[20];
 
 EVENT_RESOURCE(res_energyflow,
                "title=\"Observable resource\";energyflow",
@@ -32,7 +33,7 @@ EVENT_RESOURCE(res_energyflow,
 
 static void res_event_handler(void)
 {
-  LOG_INFO("Payload to be sent: {\"produced\":\"%.2f\", \"home\":%.2f, \"battery\":\"%.2f, \"sold\":\"%.2f\"}\n", panel_production, energy_to_house, energy_to_battery, energy_to_sell);
+  LOG_INFO("Payload to be sent: {\"produced\":\"%.2f\", \"home\":%.2f, \"battery\":\"%.2f, \"sold\":\"%.2f\", \"ts\":\"%s\"}\n", panel_production, energy_to_house, energy_to_battery, energy_to_sell, newest_ts);
   coap_notify_observers(&res_energyflow);
 }
 
