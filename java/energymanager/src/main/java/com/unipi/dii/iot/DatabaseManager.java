@@ -78,11 +78,10 @@ public class DatabaseManager{
         String tableName = sensor.toLowerCase() + "_" + address; 
 
         String createTableSQL = "CREATE TABLE IF NOT EXISTS " + tableName + " ("
-                                    + "id INT AUTO_INCREMENT, " 
+                                    + "id INT AUTO_INCREMENT PRIMARY KEY, " 
                                     + "timestamp VARCHAR(20) NOT NULL, "
                                     + "sensor VARCHAR(50) NOT NULL, "
-                                    + "value DOUBLE NOT NULL" 
-                                    + "PRIMARY KEY (id)) ";
+                                    + "value DOUBLE NOT NULL)"; 
 
         try{
             Connection conn = dbConnect();
@@ -100,13 +99,12 @@ public class DatabaseManager{
         String tableName = actuator.toLowerCase() + "_" + address; 
 
         String createTableSQL = "CREATE TABLE IF NOT EXISTS " + tableName + " ("
-                                    + "id INT AUTO_INCREMENT, " 
+                                    + "id INT AUTO_INCREMENT PRIMARY KEY, " 
                                     + "timestamp VARCHAR(20) NOT NULL, "
                                     + "produced DOUBLE NOT NULL" 
                                     + "home DOUBLE NOT NULL" 
                                     + "battery DOUBLE NOT NULL" 
-                                    + "grid DOUBLE NOT NULL" 
-                                    + "PRIMARY KEY (id)) ";
+                                    + "grid DOUBLE NOT NULL) ";
 
         try{
             Connection conn = dbConnect();
@@ -120,8 +118,8 @@ public class DatabaseManager{
 
     public boolean elementRegistered(String element, String address){
         String querySQL =   "SELECT *" +
-                            "FROM addresses" +
-                            "WHERE name = ? AND address = ?";
+                            " FROM addresses" +
+                            " WHERE name = ? AND address = ?";
 
         try{
             Connection conn = dbConnect();
@@ -190,8 +188,8 @@ public class DatabaseManager{
 
     public boolean allSensorsOnline(){
         String querySQL =   "SELECT *" +
-                            "FROM addresses" +
-                            "WHERE type = 'sensor'";
+                            " FROM addresses" +
+                            " WHERE type = 'sensor'";
 
         int sensorsOnline = 0;
         try{
