@@ -18,13 +18,13 @@ public class DatabaseManager{
     static  final String PASSWORD = "password";
 
     public static void createDB(){
-        String sql_server_url = "jdbc:mysql://localhost:3306";
+        String sql_server_url = "jdbc:mysql://localhost:3306/";
         String dbName = "energymanager";
 
         String createDBquery = "CREATE DATABASE IF NOT EXISTS " + dbName;
 
         try {
-            Connection conn = DriverManager.getConnection(sql_server_url);
+            Connection conn = DriverManager.getConnection(sql_server_url, USER, PASSWORD);
             Statement stmt = conn.createStatement();
             stmt.execute(createDBquery);
             System.out.println("db created");
@@ -35,7 +35,7 @@ public class DatabaseManager{
         }
     }
 
-    private static Connection getConnection() throws SQLException {
+    private static Connection dbConnect() throws SQLException {
         return DriverManager.getConnection(URL, USER, PASSWORD);
     }
 
@@ -47,7 +47,7 @@ public class DatabaseManager{
                                 "type VARCHAR(80) NOT NULL," + 
                                 "name VARCHAR(80) NOT NULL)";
 
-        try (Connection conn = getConnection();
+        try (Connection conn = dbConnect();
              Statement stmt = conn.createStatement()) {
             stmt.execute(createTable);
         } catch (SQLException e) {
@@ -61,7 +61,7 @@ public class DatabaseManager{
         String insertSQL = "INSERT INTO addresses (address, type, name) VALUES (?, ?, ?)";
 
         try {
-            Connection conn = getConnection();
+            Connection conn = dbConnect();
             PreparedStatement pstmt = conn.prepareStatement(insertSQL);
             pstmt.setString(1, address);
             pstmt.setString(2, type);
@@ -85,7 +85,7 @@ public class DatabaseManager{
                                     + "PRIMARY KEY (id)) ";
 
         try{
-            Connection conn = getConnection();
+            Connection conn = dbConnect();
             Statement stmt = conn.createStatement();
             stmt.execute(createTableSQL);
 
@@ -109,7 +109,7 @@ public class DatabaseManager{
                                     + "PRIMARY KEY (id)) ";
 
         try{
-            Connection conn = getConnection();
+            Connection conn = dbConnect();
             Statement stmt = conn.createStatement();
             stmt.execute(createTableSQL);
 
@@ -124,7 +124,7 @@ public class DatabaseManager{
                             "WHERE name = ? AND address = ?";
 
         try{
-            Connection conn = getConnection();
+            Connection conn = dbConnect();
             PreparedStatement pstmt = conn.prepareStatement(querySQL);
             pstmt.setString(1, element);
             pstmt.setString(2, address);
@@ -150,7 +150,7 @@ public class DatabaseManager{
         String insertSQL = "INSERT INTO "+tableName+ " (timestamp, sensor, value) VALUES (?, ?, ?)";
 
         try {
-            Connection conn = getConnection();
+            Connection conn = dbConnect();
             PreparedStatement pstmt = conn.prepareStatement(insertSQL);
             pstmt.setString(1, ts);
             pstmt.setString(2, sensor);
@@ -172,7 +172,7 @@ public class DatabaseManager{
         String insertSQL = "INSERT INTO "+tableName+ " (timestamp, produced, home, battery, grid) VALUES (?, ?, ?, ?, ?)";
 
         try {
-            Connection conn = getConnection();
+            Connection conn = dbConnect();
             PreparedStatement pstmt = conn.prepareStatement(insertSQL);
             pstmt.setString(1, ts);
             pstmt.setDouble(2, produced);
@@ -195,7 +195,7 @@ public class DatabaseManager{
 
         int sensorsOnline = 0;
         try{
-            Connection conn = getConnection();
+            Connection conn = dbConnect();
             PreparedStatement pstmt = conn.prepareStatement(querySQL);
             ResultSet resultSet = pstmt.executeQuery();
 
@@ -236,7 +236,7 @@ public class DatabaseManager{
                             "WHERE type = 'sensor'";
                     
         try{
-            Connection conn = getConnection();
+            Connection conn = dbConnect();
             PreparedStatement pstmt = conn.prepareStatement(querySQL);
             ResultSet resultSet = pstmt.executeQuery();
 
@@ -258,9 +258,11 @@ public class DatabaseManager{
 
     public static void deleteDB() {
         String deleteDB = "DROP DATABASE IF EXISTS energymanager";
+        String sql_server_url = "jdbc:mysql://localhost:3306/";
+
 
         try{
-            Connection conn = getConnection();
+            Connection conn = DriverManager.getConnection(sql_server_url, USER, PASSWORD);
             Statement stmt = conn.createStatement();
             stmt.execute(deleteDB);
             System.out.println("Database deleted successfully.");

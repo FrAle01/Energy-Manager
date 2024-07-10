@@ -78,7 +78,7 @@ PROCESS_THREAD(thermometer_process, ev, data){
         
         const char payload[] = "temperature";
         
-        coap_set_payload(request, (uint8_t *)payload, strlen(payload)-1);
+        coap_set_payload(request, (uint8_t *)payload, strlen(payload));
         
 
         printf("Sending the registration request\n");
