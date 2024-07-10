@@ -83,8 +83,6 @@ float energy_to_sell = 0;
 char newest_ts[20] = "00-00-0000_00:00:00";
 
 
-
-
 void save_value(char *sensor, double value, char* timestamp){
 
     if(strcmp(sensor, "temperature") == 0){
