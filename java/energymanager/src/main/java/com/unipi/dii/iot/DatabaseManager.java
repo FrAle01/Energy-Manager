@@ -230,8 +230,8 @@ public class DatabaseManager{
         List<SensorIp> list = new ArrayList<>();  
 
         String querySQL =   "SELECT name, address" +
-                            "FROM addresses" +
-                            "WHERE type = 'sensor'";
+                            " FROM addresses" +
+                            " WHERE type = 'sensor'";
                     
         try{
             Connection conn = dbConnect();
