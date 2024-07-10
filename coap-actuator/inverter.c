@@ -40,7 +40,9 @@ static char* service_url_cons = "/consumption";
 
 static char* service_url_reg = "/registrationActuator";
 
-// extern coap_resource_t res_batterylimit;
+extern coap_resource_t res_batterylimit;
+extern coap_resource_t res_energyflow;
+
 
 static char temp_addr[50];
 static char irr_addr[50];
@@ -50,7 +52,7 @@ static char cons_addr[50];
 static int registration_attempts = 0;
 static int registered = 0;
 
-float battery_limit=100; // default battery limit to 100%
+float battery_limit = 100; // default battery limit to 100%
 #define MAX_CAPACITY 12
 
 PROCESS(coap_client_process, "CoAP Client Process");
@@ -72,9 +74,11 @@ static Queue irr_queue;
 static Queue cap_queue;
 static Queue cons_queue;
 
-static float energy_to_house;
-static float energy_to_battery;
-static float energy_to_sell;
+float panel_production;
+
+float energy_to_house;
+float energy_to_battery;
+float energy_to_sell;
 
 
 
@@ -263,7 +267,8 @@ PROCESS_THREAD(coap_client_process, ev, data) {
             obs_cons =coap_obs_request_registration(&server_ep_cons, service_url_cons, handle_notification, NULL);
 
 
-            //coap_activate_resource(&res_batterylimit, "batterylimit");
+            coap_activate_resource(&res_batterylimit, "batterylimit");
+            coap_activate_resource(&res_energyflow, "energyflow");
 
             etimer_set(&actuator_timer, CLOCK_SECOND * 2);
 
@@ -296,43 +301,46 @@ PROCESS_THREAD(coap_client_process, ev, data) {
 
                         float features[5] = {irr_value, temp_value, hour, day, month};
 
-                        float panel_production = IoTmodel_regress1(features, 5);
+                        panel_production = IoTmodel_regress1(features, 5);
+                        float residual_energy = panel_production;
 
                         energy_to_house = 0;
                         energy_to_battery = 0;
                         energy_to_sell = 0;
 
-                        if (panel_production > house_consumption){
+                        if (residual_energy > house_consumption){
 
                             energy_to_house = house_consumption;
-                            panel_production -= house_consumption;
+                            residual_energy -= house_consumption;
 
                             if(battery_cap >= battery_limit){
 
                                 energy_to_battery = 0;
-                                energy_to_sell = panel_production; 
+                                energy_to_sell = residual_energy; 
 
                             }else{
 
                                 energy_to_battery = (battery_limit-battery_cap)*(MAX_CAPACITY/100);
-                                if(panel_production > energy_to_battery){
-                                    panel_production -= energy_to_battery;
-                                    energy_to_sell = panel_production;
-                                    panel_production = 0;
+                                if(residual_energy > energy_to_battery){
+                                    residual_energy -= energy_to_battery;
+                                    energy_to_sell = residual_energy;
+                                    residual_energy = 0;
                                 }else{
-                                    energy_to_battery = panel_production;
-                                    panel_production = 0;
+                                    energy_to_battery = residual_energy;
+                                    residual_energy = 0;
                                     energy_to_sell = 0;
                                 }
 
                             }
 
                         }else{
-                            energy_to_house = panel_production;
-                            panel_production = 0;
+                            energy_to_house = residual_energy;
+                            residual_energy = 0;
                             energy_to_battery = 0;
                             energy_to_sell = 0;
                         }
+
+                        
 
                     }
 

@@ -17,6 +17,9 @@ MODULES += $(CONTIKI_NG_APP_LAYER_DIR)/coap
 # Add the utils directory
 MODULES_REL += ./utils
 MODULES_REL += ./model
+MODULES_REL += ./resources
+MODULES_REL += ./global_variable
+
 
 TARGET_LIBFILES += -lm
 

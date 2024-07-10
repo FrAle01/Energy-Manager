@@ -10,7 +10,12 @@ public class MyServer extends CoapServer{
 
     public static void main(String args[]) {
         
-        //static dbManager = new DatabaseManager(); 
+        DatabaseManager dbManager = new DatabaseManager(); 
+        
+        dbManager.deleteDB();
+        dbManager.createDB();
+        dbManager.createAddressTable();
+
         MyServer server = new MyServer();
         server.add(new CoAPResourceSensor("registrationSensor"));
         server.add(new CoAPResourceActuator("registrationActuator"));

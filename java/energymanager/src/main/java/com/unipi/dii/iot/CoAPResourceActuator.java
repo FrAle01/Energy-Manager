@@ -91,7 +91,7 @@ public class CoAPResourceActuator extends CoapResource{
                     response.setPayload(responseJson.toJSONString());
                     exchange.respond(response);
 
-                    f
+
                 } catch (Exception e) {
                     System.err.println("Error inserting sensor IP in the database: " + e.getMessage());
                     response = new Response(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);

@@ -45,8 +45,8 @@ public class CoAPObserver implements Runnable {
                     json = (JSONObject) parser.parse(content);
 
                     String sensing =(String) json.get("sensor");
-                    String ts =(String) json.get("ts");
                     Double value =(Double) json.get("value");
+                    String ts =(String) json.get("ts");
                     
                     Boolean added = db.insertSensorValue(sensing, ipv6, value, ts);
 
