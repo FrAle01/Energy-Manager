@@ -49,7 +49,7 @@ public class FlowObserver implements Runnable{
                         String ts = (String) json.get("ts");
     
                         if(!produced.isNaN() && !to_home.isNaN() && !to_battery.isNaN() && !to_grid.isNaN() && !ts.isEmpty()){
-                            System.out.println("| -- "+produced+" ---- "+ to_home + " ---- "+  to_battery +" ---- "+ to_grid + "-- |"+ " /"+ts+"/\n");
+                            System.out.println("| -- "+produced+" ---- "+ to_home + " ---- "+  to_battery +" ---- "+ to_grid + "-- |"+ " / "+ts+" /\n");
                         }else{
                             System.err.println("Failed to receive new flow");
                         }

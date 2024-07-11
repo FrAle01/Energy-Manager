@@ -1,6 +1,5 @@
 package com.unipi.dii.iot;
 
-import java.net.InetAddress;
 import java.util.List;
 
 import org.eclipse.californium.core.CoapResource;
@@ -48,30 +47,22 @@ public class CoAPResourceActuator extends CoapResource{
     
         String actuator = payload;
     
-            if (actuator != null && ipAddress != null) {
+            if (actuator != null && ipAddress != null && !db.elementRegistered(payload, ipAddress)) {
 
-                InetAddress addr = exchange.getSourceAddress();
                 
-                System.out.println("Source address actautor: " + addr);
+                System.out.println("Source address actautor: " + ipAddress);
                 System.out.println("actuator: " + actuator);
 
                 // Remove the initial '/' from addr
-                String addrWithoutSlash = addr.getHostAddress().substring(1);
 
                 // Insert the sensor IP in the database
                 try {
 
                     // Checking for the ip of actuator
-                    if(db.elementRegistered(actuator, ipAddress)){
-                        System.out.println("actuator IP already registered");
-                        response = new Response(CoAP.ResponseCode.BAD_REQUEST);
-                        exchange.respond(response);
-                        return;
-                    }
 
                     System.out.println("Inserting ACTUATOR IP in db " + ipAddress);
-                    db.insertAddress(addrWithoutSlash, "actuator", actuator);
-                    db.createActuatorTable(actuator, addrWithoutSlash);
+                    db.insertAddress(ipAddress, "actuator", actuator);
+                    db.createActuatorTable(actuator, ipAddress);
 
                     System.out.println("actuator IP REGISTERED!");
 
@@ -107,7 +98,7 @@ public class CoAPResourceActuator extends CoapResource{
                     exchange.respond(response);
                 }
             } else {
-                System.err.println("Missing required key 'a' or IP address");
+                System.err.println("Missing IP address or element already registered");
                 response = new Response(CoAP.ResponseCode.BAD_REQUEST);
                 exchange.respond(response);
             }
