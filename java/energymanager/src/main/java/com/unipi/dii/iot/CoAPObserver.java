@@ -45,10 +45,10 @@ public class CoAPObserver implements Runnable {
                         JSONParser parser = new JSONParser();
                         json = (JSONObject) parser.parse(content);
     
-                        Double produced =(Double) json.get("produced");
-                        Double to_home =(Double) json.get("home");
-                        Double to_battery =(Double) json.get("battery");
-                        Double to_grid =(Double) json.get("sold");
+                        Double produced =(Double) json.get("p");
+                        Double to_home =(Double) json.get("h");
+                        Double to_battery =(Double) json.get("b");
+                        Double to_grid =(Double) json.get("g");
                         String ts = (String) json.get("ts");
 
                         
@@ -70,6 +70,17 @@ public class CoAPObserver implements Runnable {
                         json = (JSONObject) parser.parse(content);
     
                         String sensing =(String) json.get("sensor");
+
+                        if(sensing.equals("tm")){
+                            sensing = "temperature";
+                        }else if(sensing.equals("ir")){
+                            sensing = "irradiance";
+                        }else if(sensing.equals("cp")){
+                            sensing = "capacity";
+                        }else if(sensing.equals("cn")){
+                            sensing = "consumption";
+                        }
+
                         Double value =(Double) json.get("value");
                         String ts =(String) json.get("ts");
                         

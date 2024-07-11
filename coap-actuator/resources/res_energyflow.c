@@ -33,14 +33,14 @@ EVENT_RESOURCE(res_energyflow,
 
 static void res_event_handler(void)
 {
-  LOG_INFO("Payload to be sent: {\"produced\":\"%.2f\", \"home\":%.2f, \"battery\":\"%.2f, \"sold\":\"%.2f\", \"ts\":\"%s\"}\n", panel_production, energy_to_house, energy_to_battery, energy_to_sell, newest_ts);
+  LOG_INFO("Payload to be sent: {\"p\":\"%.2f\", \"h\":%.2f, \"b\":\"%.2f, \"g\":\"%.2f\", \"ts\":\"%s\"}\n", panel_production, energy_to_house, energy_to_battery, energy_to_sell, newest_ts);
   coap_notify_observers(&res_energyflow);
 }
 
 static void res_get_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer, uint16_t preferred_size, int32_t *offset)
 {
   coap_set_header_content_format(response, APPLICATION_JSON);
-  int payload_len = snprintf((char *)buffer, preferred_size, "{\"produced\":\"%.2f\", \"home\":%.2f, \"battery\":\"%.2f, \"sold\":\"%.2f\"}\n", panel_production, energy_to_house, energy_to_battery, energy_to_sell);
+  int payload_len = snprintf((char *)buffer, preferred_size, "{\"p\":\"%.2f\", \"h\":%.2f, \"b\":\"%.2f, \"g\":\"%.2f\", \"ts\":\"%s\"}\n", panel_production, energy_to_house, energy_to_battery, energy_to_sell, newest_ts);
   coap_set_payload(response, buffer, payload_len);
 
   LOG_INFO("Payload: %s\n", buffer);
