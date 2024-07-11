@@ -53,6 +53,29 @@ public class UserController {
                         break;
 
                     case 2:
+                        System.out.print("Strarting observation of energy flow... ");
+
+                        String addr = db.getActuatorAddress("inverter");
+
+                        if(addr == null)
+                        {
+                            System.out.println("No actuator found: " + addr);
+                            break;
+                        }
+                        System.out.print("Press any key to interrupt monitoring");
+                        System.out.print("| --- PRODUCTION ---- HOME ---- BATTERY ---- GRID -- | /    TIMESTAMP    /\n");
+                        System.out.print("__________________________________________________________________________\n");
+
+
+                        final FlowObserver observer = new FlowObserver(addr, "energyflow");
+                        observer.startObserving();
+                        try {
+                            while (true) {
+                                
+                            }
+                        } catch (Exception e) {
+                            observer.stopObserving();
+                        }
 
                         break;
 
