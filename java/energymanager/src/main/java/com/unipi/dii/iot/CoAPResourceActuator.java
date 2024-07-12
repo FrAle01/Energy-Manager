@@ -1,14 +1,9 @@
 package com.unipi.dii.iot;
 
-import java.util.List;
-
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.Response;
 import org.eclipse.californium.core.server.resources.CoapExchange;
-import org.json.simple.JSONObject;
-
-import com.unipi.dii.iot.DatabaseManager.SensorIp;
 
 public class CoAPResourceActuator extends CoapResource{
 
@@ -66,30 +61,9 @@ public class CoAPResourceActuator extends CoapResource{
 
                     System.out.println("actuator IP REGISTERED!");
 
-                    // Create response JSON object
-                    JSONObject responseJson = new JSONObject();
-                    // taking ips from database
-
-
-                    List<SensorIp> list = db.getSensorAddress();
-                    for (SensorIp sensor : list) {
-
-                        System.out.println("sensor: " + sensor.name + " ip: " + sensor.address);
-                        responseJson.put(sensor.name, sensor.address);
-
-                    }
-                    System.out.println("indirizzi ip sensori per l'attuatore " + responseJson.toString());
-
                     response = new Response(CoAP.ResponseCode.CREATED);
-                    response.setPayload(responseJson.toJSONString());
+                    response.setPayload("Registration completed");
                     exchange.respond(response);
-                    
-
-                    // strarting observer for energyflow
-                    System.out.println("Starting observer client for energy flow");  
-                    final CoAPObserver observerClient = new CoAPObserver(ipAddress, "energyflow");
-                    Thread observertThread=new Thread(observerClient);
-                    observertThread.start();
 
 
                 } catch (Exception e) {

@@ -45,13 +45,12 @@ public class CoAPObserver implements Runnable {
                         JSONParser parser = new JSONParser();
                         json = (JSONObject) parser.parse(content);
     
-                        Double produced =(Double) json.get("p");
                         Double to_home =(Double) json.get("h");
                         Double to_battery =(Double) json.get("b");
                         Double to_grid =(Double) json.get("g");
                         String ts = (String) json.get("ts");
 
-                        
+                        Double produced = to_home + to_battery + to_grid;
                         Boolean added = db.insertFlowValues("inverter", ipv6, produced, to_home, to_battery, to_grid, ts);
     
                         if(added){
@@ -87,7 +86,7 @@ public class CoAPObserver implements Runnable {
                         Boolean added = db.insertSensorValue(sensing, ipv6, value, ts);
     
                         if(added){
-                            System.out.println("Sensor"+sensing+"new value ("+value+") inserted");
+                            System.out.println("Sensor "+sensing+" new value ("+value+") inserted");
                         }else{
                             System.err.println("Failed to insert new value");
                         }

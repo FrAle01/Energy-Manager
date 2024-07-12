@@ -98,8 +98,6 @@ PROCESS_THREAD(thermometer_process, ev, data){
         leds_on(LEDS_GREEN);
         leds_single_off(LEDS_YELLOW);
        
-        printf("Activate server term\n");
-        //LOG_INFO("Starting Erbium Example Server\n");
         
         // Activate resources
         coap_activate_resource(&res_temperature, "temperature");

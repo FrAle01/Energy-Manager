@@ -4,7 +4,6 @@
 
 extern float battery_limit;
 
-extern float panel_production;
 extern float energy_to_house;
 extern float energy_to_battery;
 extern float energy_to_sell;

@@ -14,16 +14,16 @@ void initQueue(Queue* q){
 
 void addToQueue(Queue* q, double value, char* ts){
 
-    if(q->count == QUEUE_SIZE){
-        q->count = 0;
-    }
+    
 
     q->head = (q->head +1) % QUEUE_SIZE;
     q->values[q->head] = value;
     strncpy(q->ts[q->head], ts, TS_SIZE - 1);
     q->ts[q->head][TS_SIZE - 1] = '\0';
-    q->count++;
-
+    
+    if(q->count < QUEUE_SIZE){
+        q->count++;
+    }
 
 }
 

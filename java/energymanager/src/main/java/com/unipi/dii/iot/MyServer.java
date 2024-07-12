@@ -19,6 +19,7 @@ public class MyServer extends CoapServer{
         MyServer server = new MyServer();
         server.add(new CoAPResourceSensor("registrationSensor"));
         server.add(new CoAPResourceActuator("registrationActuator"));
+        server.add(new CoAPResourceAddress("addressRequest"));
         server.start();
         System.out.print("The server is Running!\n");
     }

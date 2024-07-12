@@ -33,12 +33,17 @@
 #define REGISTRATION_ATTEMPTS 5
 #define REGISTRATION_DELAY 10 // in seconds
 
+#define MAX_ADDR_REQUEST 3  // max attempts for each address request
+#define ADDR_REQUEST_DELAY 5
+
 static char* service_url_temp = "/temperature";
 static char* service_url_irr = "/irradiance";
 static char* service_url_cap = "/capacity";
 static char* service_url_cons = "/consumption";
 
 static char* service_url_reg = "/registrationActuator";
+static char* service_url_addr_req = "/addressRequest";
+
 
 extern coap_resource_t res_batterylimit;
 extern coap_resource_t res_energyflow;
@@ -49,8 +54,15 @@ static char irr_addr[50];
 static char cap_addr[50];
 static char cons_addr[50];
 
+static int temp_addr_ok = 0;
+static int irr_addr_ok = 0;
+static int cap_addr_ok = 0;
+static int cons_addr_ok = 0;
+
 static int registration_attempts = 0;
 static int registered = 0;
+
+static int address_received = 0;
 
 float battery_limit = 100; // default battery limit to 100%
 #define MAX_CAPACITY 12
@@ -63,6 +75,8 @@ static coap_endpoint_t server_ep_irr;
 static coap_endpoint_t server_ep_cap;
 static coap_endpoint_t server_ep_cons;
 
+static coap_endpoint_t server_ep;
+static coap_message_t request[1];
 
 static coap_observee_t *obs_temp = NULL;
 static coap_observee_t *obs_irr = NULL;
@@ -83,20 +97,26 @@ float energy_to_sell = 0;
 char newest_ts[20] = "00-00-0000_00:00:00";
 
 
-void save_value(char *sensor, double value, char* timestamp){
+void save_value(char *sensor, float value, char* timestamp){
 
-    if(strcmp(sensor, "temperature") == 0){
+    if(strcmp(sensor, "tm") == 0){
         addToQueue(&temp_queue, value, timestamp);
+        LOG_INFO("Received value :%.2f, for sensor: %s at time: %s\n Queue size:%d", value, sensor, timestamp, temp_queue.count);
 
-    }else if (strcmp(sensor, "irradiance") == 0){
+    }else if (strcmp(sensor, "ir") == 0){
         addToQueue(&irr_queue, value, timestamp);
+        LOG_INFO("Received value :%.2f, for sensor: %s at time: %s\n Queue size:%d", value, sensor, timestamp, irr_queue.count);
 
-    }else if (strcmp(sensor, "irradiance") == 0){
+    }else if (strcmp(sensor, "cp") == 0){
         addToQueue(&cap_queue, value, timestamp);
+        LOG_INFO("Received value :%.2f, for sensor: %s at time: %s\n Queue size:%d", value, sensor, timestamp, cap_queue.count);
 
-    }else if (strcmp(sensor, "irradiance") == 0){
+    }else if (strcmp(sensor, "cn") == 0){
         addToQueue(&cons_queue, value, timestamp);
+        LOG_INFO("Received value :%.2f, for sensor: %s at time: %s\n Queue size:%d", value, sensor, timestamp, cons_queue.count);
 
+    }else{
+        LOG_INFO("No value inserted");
     }
     
 }
@@ -114,7 +134,7 @@ void handle_notification(struct coap_observee_s *observee, void *notification, c
         LOG_INFO("NOTIFICATION OK: %*s\n", len, (char *)payload);
 
         char *sensor = json_parse_string((char *)payload, "sensor");
-        double value = json_parse_number((char *)payload, "value");
+        float value = json_parse_number((char *)payload, "value");
         char *timestamp = json_parse_string((char *)payload, "ts");
 
 
@@ -168,42 +188,54 @@ void registration_handler(coap_message_t *response) {
     payload[len] = '\0';
     printf("Registration payload: %s\n", payload);
 
-    // Assume payload contains IPv6 addresses in JSON format
-    
-
-    char *temp_ip = json_parse_string(payload, "temperature");
-    char *irr_ip = json_parse_string(payload, "irradiance");
-    char *cap_ip = json_parse_string(payload, "capacity");
-    char *cons_ip = json_parse_string(payload, "consumption");
-
-
-
-    if (temp_ip != NULL && irr_ip != NULL && cap_ip != NULL && cons_ip != NULL) {
-        /*
-        char full_ipv6temp[50];
-        char full_ipv6lpg[50];
-        snprintf(full_ipv6temp, sizeof(full_ipv6temp), "fd00:0:0:0:%s", ipv6temp_item->valuestring);
-ù
-        strncpy(ipv6temp, full_ipv6temp, sizeof(ipv6temp) - 1);
-        ipv6temp[sizeof(ipv6temp) - 1] = '\0';
-
-        strncpy(ipv6lpg, full_ipv6lpg, sizeof(ipv6lpg) - 1);
-        ipv6lpg[sizeof(ipv6lpg) - 1] = '\0';
-
-        printf("Registered IPv6temp: %s\n", temp_addr);
-        */
-
-        registered = 1;
-    } else {
-        printf("Invalid JSON format or missing keys\n");
-    }
+    registered = 1;
  
 }
 
+void address_response_handler(coap_message_t *response){
+    if (response == NULL) {
+        printf("No address response received.\n");
+        return;
+    }
+
+    const uint8_t *chunk;
+    int len = coap_get_payload(response, &chunk);
+    char payload[len + 1];
+    strncpy(payload, (char *)chunk, len);
+    payload[len] = '\0';
+    printf("Registration payload: %s\n", payload);
+
+    char *sensor = json_parse_string(payload, "sensor");
+    char *sensor_ip = json_parse_string(payload, "addr");
+
+    if(sensor_ip != NULL){
+        if(strcmp(sensor, "temperature") == 0){
+            strcpy(temp_addr, sensor_ip);
+            temp_addr_ok = 1;
+
+        }else if(strcmp(sensor, "irradiance") == 0){
+            strcpy(irr_addr, sensor_ip);
+            irr_addr_ok = 1;
+
+        }else if(strcmp(sensor, "capacity") == 0){
+            strcpy(cap_addr, sensor_ip);
+            cap_addr_ok = 1;
+
+        }else if(strcmp(sensor, "consumption") == 0){
+            strcpy(cons_addr, sensor_ip);
+            cons_addr_ok = 1;
+
+        }
+        address_received = 1;
+
+    }else{
+        address_received = 0;
+    }
+}
+
+
 PROCESS_THREAD(coap_client_process, ev, data) {
     PROCESS_BEGIN();
-    static coap_endpoint_t server_ep;
-    static coap_message_t request[1];
     static struct etimer registration_timer;
     static struct etimer actuator_timer;
     
@@ -218,7 +250,6 @@ PROCESS_THREAD(coap_client_process, ev, data) {
 
         while (registration_attempts < REGISTRATION_ATTEMPTS && !registered) {
             leds_on(LEDS_RED);
-            leds_single_on(LEDS_YELLOW);
 
             coap_init_message(request, COAP_TYPE_CON, COAP_POST, 0);
             coap_set_header_uri_path(request, service_url_reg);
@@ -237,8 +268,109 @@ PROCESS_THREAD(coap_client_process, ev, data) {
         if (registered) {
 
             leds_off(LEDS_RED);
-            leds_on(LEDS_GREEN);
-            leds_single_off(LEDS_YELLOW);
+            leds_on(LEDS_BLUE);
+            leds_single_on(LEDS_YELLOW);
+
+            struct etimer address_timer;
+            //get_sensor_addr("temperature");
+
+
+            int address_request = 0;
+            address_received = 0;
+
+        
+            while(address_request < MAX_ADDR_REQUEST && !address_received){
+
+                coap_init_message(request, COAP_TYPE_CON, COAP_POST, 0);
+                coap_set_header_uri_path(request, service_url_addr_req);
+
+                char *buff = "{\"a\": \"inverter\", \"s\": \"temperature\"}";
+                coap_set_payload(request, (uint8_t *)buff, strlen(buff));
+
+                printf("Sending temperature address request...\n");
+                COAP_BLOCKING_REQUEST(&server_ep, request, address_response_handler);
+                if (!address_received) {
+                    address_request++;
+                    etimer_set(&address_timer, CLOCK_SECOND * ADDR_REQUEST_DELAY);
+                    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&address_timer));
+                }
+            }
+
+            //get_sensor_addr("irradiance");
+            address_request = 0;
+            address_received = 0;
+
+            while(address_request < MAX_ADDR_REQUEST && !address_received){
+
+                coap_init_message(request, COAP_TYPE_CON, COAP_POST, 0);
+                coap_set_header_uri_path(request, service_url_addr_req);
+
+                char *buff = "{\"a\": \"inverter\", \"s\": \"irradiance\"}";
+                coap_set_payload(request, (uint8_t *)buff, strlen(buff));
+
+                printf("Sending irradiance address request...\n");
+                COAP_BLOCKING_REQUEST(&server_ep, request, address_response_handler);
+                if (!address_received) {
+                    address_request++;
+                    etimer_set(&address_timer, CLOCK_SECOND * ADDR_REQUEST_DELAY);
+                    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&address_timer));
+                }
+            }
+            
+            //get_sensor_addr("capacity");
+            address_request = 0;
+            address_received = 0;
+
+            while(address_request < MAX_ADDR_REQUEST && !address_received){
+
+                coap_init_message(request, COAP_TYPE_CON, COAP_POST, 0);
+                coap_set_header_uri_path(request, service_url_addr_req);
+
+                char *buff = "{\"a\": \"inverter\", \"s\": \"capacity\"}";
+                coap_set_payload(request, (uint8_t *)buff, strlen(buff));
+
+                printf("Sending capacity address request...\n");
+                COAP_BLOCKING_REQUEST(&server_ep, request, address_response_handler);
+                if (!address_received) {
+                    address_request++;
+                    etimer_set(&address_timer, CLOCK_SECOND * ADDR_REQUEST_DELAY);
+                    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&address_timer));
+                }
+            }
+
+            //get_sensor_addr("consumption");
+            address_request = 0;
+            address_received = 0;
+
+            while(address_request < MAX_ADDR_REQUEST && !address_received){
+
+                coap_init_message(request, COAP_TYPE_CON, COAP_POST, 0);
+                coap_set_header_uri_path(request, service_url_addr_req);
+
+                char *buff = "{\"a\": \"inverter\", \"s\": \"consumption\"}";
+                coap_set_payload(request, (uint8_t *)buff, strlen(buff));
+
+                printf("Sending consumption address request...\n");
+                COAP_BLOCKING_REQUEST(&server_ep, request, address_response_handler);
+                if (!address_received) {
+                    address_request++;
+                    etimer_set(&address_timer, CLOCK_SECOND * ADDR_REQUEST_DELAY);
+                    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&address_timer));
+                }
+            }
+
+
+            if (temp_addr_ok && irr_addr_ok && cap_addr_ok && cons_addr_ok){
+                leds_single_off(LEDS_YELLOW);
+                leds_off(LEDS_BLUE);
+                leds_on(LEDS_GREEN);
+            }else{
+                leds_off(LEDS_BLUE);
+                leds_on(LEDS_RED);
+                printf("Failed to receive sensor addesses from server");
+                exit(1);
+            }
+            
 
             char uri_temp[100];
             char uri_irr[100];
@@ -271,7 +403,7 @@ PROCESS_THREAD(coap_client_process, ev, data) {
             coap_activate_resource(&res_batterylimit, "batterylimit");
             coap_activate_resource(&res_energyflow, "energyflow");
 
-            etimer_set(&actuator_timer, CLOCK_SECOND * 2);
+            etimer_set(&actuator_timer, CLOCK_SECOND * 10);
 
             initQueue(&temp_queue);
             initQueue(&irr_queue);
@@ -285,15 +417,23 @@ PROCESS_THREAD(coap_client_process, ev, data) {
                     process_poll(&coap_client_process);
 
                     if(fullQueue(&temp_queue) && fullQueue(&irr_queue) && fullQueue(&cap_queue) && fullQueue(&cons_queue)){
+                        LOG_INFO("Calculating new energy distribution\n");
 
                         float temp_value = getWMean(&temp_queue, 0.8);
+                        LOG_INFO("Using temp mean: %.2f\n", temp_value);
                         float irr_value = getWMean(&irr_queue, 0.8);
+                        LOG_INFO("Using irr mean: %.2f\n", irr_value);
 
                         float battery_cap = getHead(&cap_queue);
+                        LOG_INFO("And residual battery: %.2f\n", battery_cap);
+
                         float house_consumption = getHead(&cons_queue);
+                        LOG_INFO("With house consumption: %.2f\n", house_consumption);
 
 
                         getRecentTS(newest_ts, &temp_queue, &irr_queue, &cap_queue, &cons_queue);
+                        LOG_INFO("At time %s", newest_ts);
+
 
                         float day = extractDay(newest_ts);
                         float month = extractMonth(newest_ts);
@@ -301,7 +441,7 @@ PROCESS_THREAD(coap_client_process, ev, data) {
 
                         float features[5] = {irr_value, temp_value, hour, day, month};
 
-                        panel_production = IoTmodel_regress1(features, 5);
+                        panel_production = (float)IoTmodel_predict(features, 5);
                         float residual_energy = panel_production;
 
                         energy_to_house = 0;
@@ -316,7 +456,8 @@ PROCESS_THREAD(coap_client_process, ev, data) {
                             if(battery_cap >= battery_limit){
 
                                 energy_to_battery = 0;
-                                energy_to_sell = residual_energy; 
+                                energy_to_sell = residual_energy;
+                                residual_energy = 0; 
 
                             }else{
 
@@ -340,10 +481,9 @@ PROCESS_THREAD(coap_client_process, ev, data) {
                             energy_to_sell = 0;
                         }
 
-                        
-
+                        res_energyflow.trigger();
+                    
                     }
-
                     etimer_reset(&actuator_timer);
 
 

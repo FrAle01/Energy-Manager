@@ -63,7 +63,6 @@ PROCESS_THREAD(energy_process, ev, data){
 
     PROCESS_BEGIN();
 
-    random_init(0); // Initialize random number generator
     while(ev != button_hal_press_event || pressed==0) {
         pressed=1;
         PROCESS_YIELD();
@@ -99,8 +98,6 @@ PROCESS_THREAD(energy_process, ev, data){
         leds_on(LEDS_GREEN);
         leds_single_off(LEDS_YELLOW);
 
-        printf("Activate server term\n");
-        //LOG_INFO("Starting Erbium Example Server\n");
         
         // Activate resources
         coap_activate_resource(&res_consumption, "consumption");

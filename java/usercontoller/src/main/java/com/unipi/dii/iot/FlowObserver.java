@@ -42,11 +42,12 @@ public class FlowObserver implements Runnable{
                         JSONParser parser = new JSONParser();
                         json = (JSONObject) parser.parse(content);
     
-                        Double produced =(Double) json.get("p");
                         Double to_home =(Double) json.get("h");
                         Double to_battery =(Double) json.get("b");
                         Double to_grid =(Double) json.get("g");
                         String ts = (String) json.get("ts");
+                        
+                        Double produced =to_home + to_battery + to_grid;
     
                         if(!produced.isNaN() && !to_home.isNaN() && !to_battery.isNaN() && !to_grid.isNaN() && !ts.isEmpty()){
                             System.out.println("| -- "+produced+" ---- "+ to_home + " ---- "+  to_battery +" ---- "+ to_grid + "-- |"+ " / "+ts+" /\n");

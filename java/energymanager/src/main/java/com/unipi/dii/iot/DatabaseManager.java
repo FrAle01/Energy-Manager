@@ -101,9 +101,9 @@ public class DatabaseManager{
         String createTableSQL = "CREATE TABLE IF NOT EXISTS " + tableName + " ("
                                     + "id INT AUTO_INCREMENT PRIMARY KEY, " 
                                     + "timestamp VARCHAR(20) NOT NULL, "
-                                    + "produced DOUBLE NOT NULL" 
-                                    + "home DOUBLE NOT NULL" 
-                                    + "battery DOUBLE NOT NULL" 
+                                    + "produced DOUBLE NOT NULL," 
+                                    + "home DOUBLE NOT NULL," 
+                                    + "battery DOUBLE NOT NULL," 
                                     + "grid DOUBLE NOT NULL) ";
 
         try{
@@ -252,6 +252,32 @@ public class DatabaseManager{
             list.clear();
             return list;
         }
+    }
+
+    public String getAddress(String type, String name){
+        String address;
+        String querySQL =   "SELECT address" +
+                            " FROM addresses" +
+                            " WHERE type = ? AND name = ?";
+        
+        try{
+            Connection conn = dbConnect();
+            PreparedStatement pstmt = conn.prepareStatement(querySQL);
+            pstmt.setString(1, type);
+            pstmt.setString(2, name);
+
+            ResultSet resultSet = pstmt.executeQuery();
+
+            if(resultSet.next()){
+                address = resultSet.getString("address");
+            }else{
+                address = null;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            address = null;
+        }
+        return address;
     }
 
     public static void deleteDB() {
