@@ -5,6 +5,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "coap-log.h"
+#define LOG_MODULE "App"
+#define LOG_LEVEL  LOG_LEVEL_DBG
+
 static void res_get_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer,
                             uint16_t preferred_size, int32_t *offset);
 static void res_post_handler(coap_message_t *request, coap_message_t *response, uint8_t *buffer,
@@ -60,7 +64,7 @@ static void res_post_handler(coap_message_t *request, coap_message_t *response, 
         battery_limit = atof(new_limit_str);
 
         // Log the new threshold
-        printf("New temperature threshold set: %.2f\n", battery_limit);
+        LOG_INFO("New battery limit set: %.2f\n", battery_limit);
 
         // Construct the response payload
         int length = snprintf((char *)buffer, preferred_size, "Threshold set to: %.2f", battery_limit);

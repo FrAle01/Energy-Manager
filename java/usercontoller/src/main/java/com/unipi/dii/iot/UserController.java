@@ -7,8 +7,10 @@ import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
 
 public class UserController {
+
     public static void main(String[] args) {
-                
+        
+        DatabaseAccess db = new DatabaseAccess();
         Scanner scanner = new Scanner(System.in);
 
         while (true) { 
@@ -18,6 +20,7 @@ public class UserController {
 
                 int command = scanner.nextInt();
                 scanner.nextLine();
+                String addr = null;
 
                 switch (command) {
                     case 1:
@@ -29,7 +32,7 @@ public class UserController {
                             break;
                         }
 
-                        String addr = db.getActuatorAddress("inverter");
+                        addr = db.getAddress("actuator", "inverter");
 
                         if(addr == null)
                         {
@@ -55,13 +58,14 @@ public class UserController {
                     case 2:
                         System.out.print("Strarting observation of energy flow... ");
 
-                        String addr = db.getActuatorAddress("inverter");
+                        addr = db.getAddress("actuator", "inverter");
 
                         if(addr == null)
                         {
                             System.out.println("No actuator found: " + addr);
                             break;
                         }
+                        
                         System.out.print("Press any key to interrupt monitoring");
                         System.out.print("| --- PRODUCTION ---- HOME ---- BATTERY ---- GRID -- | /    TIMESTAMP    /\n");
                         System.out.print("__________________________________________________________________________\n");
