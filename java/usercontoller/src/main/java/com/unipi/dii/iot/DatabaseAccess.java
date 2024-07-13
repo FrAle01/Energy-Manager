@@ -5,6 +5,8 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DatabaseAccess {
     
@@ -40,5 +42,45 @@ public class DatabaseAccess {
             address = null;
         }
         return address;
+    }
+
+    public class SensorIp{
+        
+        String name;
+        String address;
+
+        public SensorIp(String name, String address){
+            this.name = name;
+            this.address = address;
+        }
+    }
+
+    public List<SensorIp> getSensorAddress(){
+
+        List<SensorIp> list = new ArrayList<>();  
+
+        String querySQL =   "SELECT name, address" +
+                            " FROM addresses" +
+                            " WHERE type = 'sensor'";
+                    
+        try{
+            Connection conn = dbConnect();
+            PreparedStatement pstmt = conn.prepareStatement(querySQL);
+            ResultSet resultSet = pstmt.executeQuery();
+
+            while(resultSet.next()){
+                SensorIp sensor = new SensorIp(resultSet.getString("name"), resultSet.getString("address"));
+                list.add(sensor);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } 
+        
+        if(list.size() == 4){
+            return list;
+        }else{
+            list.clear();
+            return list;
+        }
     }
 }

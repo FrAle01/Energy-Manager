@@ -100,7 +100,10 @@ public class CoAPObserver implements Runnable {
 
             @Override
             public void onError() {
+                DatabaseManager db = new DatabaseManager();
+                
                 System.err.println("Failed to receive notification");
+                db.deleteAddress(ipv6, resource);
                 
             }
         });

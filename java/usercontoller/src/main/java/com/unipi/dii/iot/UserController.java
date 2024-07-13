@@ -1,10 +1,13 @@
 package com.unipi.dii.iot;
 
+import java.util.List;
 import java.util.Scanner;
 
 import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
+
+import com.unipi.dii.iot.DatabaseAccess.SensorIp;
 
 public class UserController {
 
@@ -81,6 +84,19 @@ public class UserController {
                             observer.stopObserving();
                         }
 
+                        break;
+
+                    case 3:
+
+                        List<SensorIp> onlineSensors = db.getSensorAddress();
+                
+                        for(SensorIp sensor : onlineSensors){
+                            System.out.print("Sensor "+sensor.name +": ONLINE\n");
+                        }
+                        if(onlineSensors.size() < 4){
+                            Integer offlineSensorNum = 4 - onlineSensors.size();
+                            System.out.print("Sensors OFFLINE: "+ offlineSensorNum);
+                        }
                         break;
 
                     default:
