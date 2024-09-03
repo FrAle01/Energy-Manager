@@ -48,7 +48,9 @@ build/cooja/obj/res_batterylimit.o: resources/res_batterylimit.c \
  ../../../os/net/app-layer/coap/coap-engine.h \
  ../../../os/net/app-layer/coap/coap-observe.h \
  ../../../os/net/app-layer/coap/coap-separate.h \
- ../../../os/net/app-layer/coap/coap-observe-client.h
+ ../../../os/net/app-layer/coap/coap-observe-client.h \
+ ../../../os/net/app-layer/coap/coap-log.h ../../../os/sys/log.h \
+ ../../../os/sys/log-conf.h
 ../../../os/net/app-layer/coap/module-macros.h:
 ../../../os/contiki.h:
 ../../../arch/platform/cooja/./contiki-conf.h:
@@ -131,3 +133,6 @@ project-conf.h:
 ../../../os/net/app-layer/coap/coap-observe.h:
 ../../../os/net/app-layer/coap/coap-separate.h:
 ../../../os/net/app-layer/coap/coap-observe-client.h:
+../../../os/net/app-layer/coap/coap-log.h:
+../../../os/sys/log.h:
+../../../os/sys/log-conf.h:

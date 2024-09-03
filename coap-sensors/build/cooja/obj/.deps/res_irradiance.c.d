@@ -25,8 +25,8 @@ build/cooja/obj/res_irradiance.o: resources/res_irradiance.c \
  ../../../os/net/app-layer/coap/coap-observe.h \
  ../../../os/net/app-layer/coap/coap-separate.h \
  ../../../os/net/app-layer/coap/coap-observe-client.h \
- resources/../utils/timestamp.h ../../../os/sys/log.h \
- ../../../os/sys/log-conf.h
+ resources/../utils/timestamp.h resources/../utils/generate_values.h \
+ ../../../os/sys/log.h ../../../os/sys/log-conf.h
 ../../../os/net/app-layer/coap/module-macros.h:
 ../../../os/net/app-layer/coap/coap-engine.h:
 ../../../os/net/app-layer/coap/coap.h:
@@ -69,5 +69,6 @@ project-conf.h:
 ../../../os/net/app-layer/coap/coap-separate.h:
 ../../../os/net/app-layer/coap/coap-observe-client.h:
 resources/../utils/timestamp.h:
+resources/../utils/generate_values.h:
 ../../../os/sys/log.h:
 ../../../os/sys/log-conf.h:

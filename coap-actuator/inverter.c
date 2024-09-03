@@ -441,7 +441,7 @@ PROCESS_THREAD(coap_client_process, ev, data) {
 
                         float features[5] = {irr_value, temp_value, hour, day, month};
 
-                        panel_production = (float)IoTmodel_predict(features, 5);
+                        panel_production = IoTmodel_regress1(features, 5);
                         float residual_energy = panel_production;
 
                         energy_to_house = 0;
