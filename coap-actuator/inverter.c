@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "contiki.h"
 #include "contiki-net.h"
 #include "coap-engine.h"
@@ -442,7 +443,14 @@ PROCESS_THREAD(coap_client_process, ev, data) {
                         float features[5] = {irr_value, temp_value, hour, day, month};
 
                         panel_production = IoTmodel_regress1(features, 5);
-                        float residual_energy = panel_production;
+                        
+                        float residual_energy;
+
+                        if(isnan(panel_production)){
+                            residual_energy = 0;
+                        }else{
+                            residual_energy = panel_production;
+                        }
 
                         energy_to_house = 0;
                         energy_to_battery = 0;
