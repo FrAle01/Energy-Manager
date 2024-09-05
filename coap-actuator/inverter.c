@@ -36,6 +36,7 @@
 
 #define MAX_ADDR_REQUEST 3  // max attempts for each address request
 #define ADDR_REQUEST_DELAY 5
+#define MAX_CAPACITY 12
 
 static char* service_url_temp = "/temperature";
 static char* service_url_irr = "/irradiance";
@@ -66,7 +67,6 @@ static int registered = 0;
 static int address_received = 0;
 
 float battery_limit = 100; // default battery limit to 100%
-#define MAX_CAPACITY 12
 
 PROCESS(coap_client_process, "CoAP Client Process");
 AUTOSTART_PROCESSES(&coap_client_process);
@@ -427,6 +427,7 @@ PROCESS_THREAD(coap_client_process, ev, data) {
 
                         float battery_cap = getHead(&cap_queue);
                         LOG_INFO("And residual battery: %.2f\n", battery_cap);
+                        LOG_INFO("Battery limit setted: %.2f\n", battery_limit);
 
                         float house_consumption = getHead(&cons_queue);
                         LOG_INFO("With house consumption: %.2f\n", house_consumption);
@@ -444,7 +445,7 @@ PROCESS_THREAD(coap_client_process, ev, data) {
 
                         panel_production = IoTmodel_regress1(features, 5);
                         
-                        float residual_energy = panel_production;
+                        float residual_energy = panel_production/100;
 
                         /*
                         if(isnan(panel_production)){
@@ -471,7 +472,10 @@ PROCESS_THREAD(coap_client_process, ev, data) {
 
                             }else{
 
-                                energy_to_battery = (battery_limit-battery_cap)*(MAX_CAPACITY/100);
+                                energy_to_battery = (battery_limit-battery_cap)/100;
+                                energy_to_battery *= MAX_CAPACITY;
+                                LOG_INFO("Energy to battery calculated: %.2f\n", energy_to_battery);
+
                                 if(residual_energy > energy_to_battery){
                                     residual_energy -= energy_to_battery;
                                     energy_to_sell = residual_energy;

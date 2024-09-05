@@ -34,7 +34,6 @@ public class FlowObserver implements Runnable{
             public void onLoad(CoapResponse response){
                 
                 String content = response.getResponseText();
-                System.out.println("Notification: " + content);
                 JSONObject json= null;
 
                 if(resource.equals("energyflow")){
