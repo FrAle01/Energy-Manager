@@ -444,13 +444,15 @@ PROCESS_THREAD(coap_client_process, ev, data) {
 
                         panel_production = IoTmodel_regress1(features, 5);
                         
-                        float residual_energy;
+                        float residual_energy = panel_production;
 
+                        /*
                         if(isnan(panel_production)){
                             residual_energy = 0;
                         }else{
                             residual_energy = panel_production;
                         }
+                        */
 
                         energy_to_house = 0;
                         energy_to_battery = 0;
