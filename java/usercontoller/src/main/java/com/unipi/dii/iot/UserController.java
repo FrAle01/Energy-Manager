@@ -1,14 +1,12 @@
 package com.unipi.dii.iot;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Scanner;
 
 import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
-
-import java.io.IOException;
-
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
@@ -51,7 +49,8 @@ public class UserController {
                             JSONObject presentLimit = null;
                             JSONParser parser = new JSONParser();
                             presentLimit = (JSONObject) parser.parse(response.getResponseText());
-                            Double limit = (Double) presentLimit.get("limit");
+                            String str_limit = (String) presentLimit.get("limit");
+                            Double limit = Double.parseDouble(str_limit);
                             System.out.print("\n\nCurrent battery limit setted at " + limit + "%\n");
 
                         }
@@ -78,7 +77,7 @@ public class UserController {
                         break;
 
                     case 2:
-                        System.out.print("Strarting observation of energy flow... \n");
+                        System.out.print("Starting observation of energy flow... \n");
 
                         addr = db.getAddress("actuator", "inverter");
 

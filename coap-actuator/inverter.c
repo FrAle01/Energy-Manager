@@ -96,6 +96,7 @@ float energy_to_battery = 0;
 float energy_to_sell = 0;
 
 char newest_ts[20] = "00-00-0000_00:00:00";
+char newest_time[9] = "00:00:00";
 
 
 void save_value(char *sensor, float value, char* timestamp){
@@ -135,8 +136,10 @@ void handle_notification(struct coap_observee_s *observee, void *notification, c
         LOG_INFO("NOTIFICATION OK: %*s\n", len, (char *)payload);
 
         char *sensor = json_parse_string((char *)payload, "sensor");
-        float value = json_parse_number((char *)payload, "value");
+        char *str_value = json_parse_string((char *)payload, "value");
         char *timestamp = json_parse_string((char *)payload, "ts");
+
+        float value = atof(str_value);
 
 
       // verify if the values are valid: sesnor must not be null and value must be greater than 0
@@ -434,8 +437,9 @@ PROCESS_THREAD(coap_client_process, ev, data) {
 
 
                         getRecentTS(newest_ts, &temp_queue, &irr_queue, &cap_queue, &cons_queue);
-                        LOG_INFO("At time %s", newest_ts);
-
+                        LOG_INFO("At timestamp %s", newest_ts);
+                        extractTime(newest_time, newest_ts);
+                        LOG_INFO("At time %s", newest_time);
 
                         float day = extractDay(newest_ts);
                         float month = extractMonth(newest_ts);

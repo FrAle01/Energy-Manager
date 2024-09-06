@@ -27,14 +27,16 @@ EVENT_RESOURCE(res_irradiance,
                res_event_handler);
 
 static double curr_irradiance = 0;
+static char irr_str[7] = "00.00";
 static char ts[20];
 
 static void res_event_handler(void)
 {
   curr_irradiance = fmax(get_rand_value(500.0, 250.0), 0.0);
   get_timestamp(ts);
-  
-  LOG_INFO("Payload to be sent: {\"sensor\":\"ir\", \"value\":%.2f, \"ts\":\"%s\"}\n", curr_irradiance, ts);
+  sprintf(irr_str, "%.2f", curr_irradiance);
+
+  LOG_INFO("Payload to be sent: {\"sensor\":\"ir\", \"value\":\"%s\", \"ts\":\"%s\"}\n", irr_str, ts);
   coap_notify_observers(&res_irradiance);
 }
 
@@ -43,7 +45,7 @@ static void res_get_handler(coap_message_t *request, coap_message_t *response, u
   setlocale(LC_NUMERIC, "C");
 
   coap_set_header_content_format(response, APPLICATION_JSON);
-  int payload_len = snprintf((char *)buffer, preferred_size, "{\"sensor\":\"ir\", \"value\":%.2f, \"ts\":\"%s\"}\n", curr_irradiance, ts);
+  int payload_len = snprintf((char *)buffer, preferred_size, "{\"sensor\":\"ir\", \"value\":\"%s\", \"ts\":\"%s\"}\n", irr_str, ts);
   coap_set_payload(response, buffer, payload_len);
 
   LOG_INFO("Payload: %s\n", buffer);

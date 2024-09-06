@@ -15,6 +15,7 @@ static void res_post_handler(coap_message_t *request, coap_message_t *response, 
                              uint16_t preferred_size, int32_t *offset);
 
 extern float battery_limit;  // Default limit value
+static char battery_str[7];
 
 RESOURCE(res_batterylimit,
          "title=\"Set Battery Limit\";rt=\"Text\"",
@@ -27,8 +28,8 @@ static void res_get_handler(coap_message_t *request, coap_message_t *response, u
                             uint16_t preferred_size, int32_t *offset) {
     printf("GET ricevuta\n");
 
-
-    int length = snprintf((char*)buffer, preferred_size, "{\"limit\":%.2f}\n", battery_limit);
+    sprintf(battery_str, "%.2f", battery_limit);
+    int length = snprintf((char*)buffer, preferred_size, "{\"limit\":\"%s\"}\n", battery_str);
     if (length > preferred_size) {
         length = preferred_size;
     }

@@ -29,14 +29,17 @@ EVENT_RESOURCE(res_capacity,
                res_event_handler);
 
 static double curr_perc_capacity = 0; 
+static char cap_str[7] = "00.00";
 static char ts[20];
 
 static void res_event_handler(void)
 {
   curr_perc_capacity = generate_curr_battery_cap(70.0, 30.0); // random % between 0 and 100
   get_timestamp(ts);
+  sprintf(cap_str, "%.2f", curr_perc_capacity);
 
-  LOG_INFO("Payload to be sent: {\"sensor\":\"cp\", \"value\":%.2f, \"ts\":\"%s\"}\n", curr_perc_capacity, ts);
+
+  LOG_INFO("Payload to be sent: {\"sensor\":\"cp\", \"value\":\"%s\", \"ts\":\"%s\"}\n", cap_str, ts);
   coap_notify_observers(&res_capacity);
 }
 
@@ -45,7 +48,7 @@ static void res_get_handler(coap_message_t *request, coap_message_t *response, u
   setlocale(LC_NUMERIC, "C");
 
   coap_set_header_content_format(response, APPLICATION_JSON);
-  int payload_len = snprintf((char *)buffer, preferred_size, "{\"sensor\":\"cp\", \"value\":%.2f, \"ts\":\"%s\"}\n", curr_perc_capacity, ts);
+  int payload_len = snprintf((char *)buffer, preferred_size, "{\"sensor\":\"cp\", \"value\":\"%s\", \"ts\":\"%s\"}\n", cap_str, ts);
   coap_set_payload(response, buffer, payload_len);
 
   LOG_INFO("Payload: %s\n", buffer);

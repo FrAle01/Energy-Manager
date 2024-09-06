@@ -6,5 +6,7 @@ void recentTS(char*, const char*, const char*, const char*, const char*);
 float extractDay(const char*);
 float extractMonth(const char*);
 float extractHour(const char*);
+void extractTime(char *, const char* );
+
 
 #endif

@@ -1,6 +1,8 @@
 package com.unipi.dii.iot;
 
 
+import java.time.LocalDate;
+
 import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapHandler;
 import org.eclipse.californium.core.CoapObserveRelation;
@@ -45,10 +47,19 @@ public class CoAPObserver implements Runnable {
                         JSONParser parser = new JSONParser();
                         json = (JSONObject) parser.parse(content);
     
-                        Double to_home =(Double) json.get("h");
-                        Double to_battery =(Double) json.get("b");
-                        Double to_grid =(Double) json.get("g");
-                        String ts = (String) json.get("ts");
+                        String str_home =(String) json.get("h");
+                        String str_battery =(String) json.get("b");
+                        String str_grid =(String) json.get("g");
+                        String hour = (String) json.get("ts");
+
+                        String date = LocalDate.now().toString();
+                        String ts = date + "_" + hour;
+
+
+                        Double to_home = Double.parseDouble(str_home);
+                        Double to_battery = Double.parseDouble(str_battery);
+                        Double to_grid = Double.parseDouble(str_grid);
+
 
                         Double produced = to_home + to_battery + to_grid;
                         Boolean added = db.insertFlowValues("inverter", ipv6, produced, to_home, to_battery, to_grid, ts);
@@ -80,8 +91,10 @@ public class CoAPObserver implements Runnable {
                             sensing = "consumption";
                         }
 
-                        Double value =(Double) json.get("value");
+                        String str_value =(String) json.get("value");
                         String ts =(String) json.get("ts");
+
+                        Double value = Double.parseDouble(str_value);
                         
                         Boolean added = db.insertSensorValue(sensing, ipv6, value, ts);
     

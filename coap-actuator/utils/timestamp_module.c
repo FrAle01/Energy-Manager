@@ -68,4 +68,11 @@ float extractHour(const char* ts){
         return -1;
     }
 }
+void extractTime(char *my_time, const char* ts){
+    char full_time[9];
+    strncpy(full_time, ts + 11, 8);
+    full_time[8] = '\0';
+
+    strcpy(my_time, full_time);   
+}
 
