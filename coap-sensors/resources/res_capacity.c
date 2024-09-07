@@ -3,7 +3,6 @@
 #include <string.h>
 #include <time.h>
 #include "coap-engine.h"
-#include "../utils/timestamp.h"
 #include "../utils/generate_values.h"
 
 

@@ -70,8 +70,8 @@ build/nrf52840/dongle/obj/res-temperature.o: resources/res-temperature.c \
  ../../../os/net/app-layer/coap/coap-observe.h \
  ../../../os/net/app-layer/coap/coap-separate.h \
  ../../../os/net/app-layer/coap/coap-observe-client.h \
- resources/../utils/timestamp.h resources/../utils/generate_values.h \
- ../../../os/sys/log.h ../../../os/sys/log-conf.h
+ resources/../utils/generate_values.h ../../../os/sys/log.h \
+ ../../../os/sys/log-conf.h
 
 ../../../os/net/app-layer/coap/module-macros.h:
 
@@ -244,8 +244,6 @@ project-conf.h:
 ../../../os/net/app-layer/coap/coap-separate.h:
 
 ../../../os/net/app-layer/coap/coap-observe-client.h:
-
-resources/../utils/timestamp.h:
 
 resources/../utils/generate_values.h:
 

@@ -3,12 +3,13 @@
 #include <string.h>
 #include "contiki.h"
 #include "coap-engine.h"
-#include "random.h"
 #include "contiki-net.h"
 #include "sys/log.h"
 #include "coap-blocking-api.h"
 #include "os/dev/button-hal.h"
 #include "leds.h"
+
+#include "utils/generate_values.h"
 
 #define LOG_MODULE "App"
 #define LOG_LEVEL LOG_LEVEL_APP
@@ -62,7 +63,8 @@ PROCESS_THREAD(thermometer_process, ev, data){
 
     PROCESS_BEGIN();
 
-    random_init(0); // Initialize random number generator
+    rand_init();
+
     while(ev != button_hal_press_event || pressed==0) {
         pressed=1;
         PROCESS_YIELD();

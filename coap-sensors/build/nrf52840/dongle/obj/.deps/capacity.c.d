@@ -70,7 +70,7 @@ build/nrf52840/dongle/obj/capacity.o: capacity.c \
  ../../../os/net/app-layer/coap/coap-observe.h \
  ../../../os/net/app-layer/coap/coap-separate.h \
  ../../../os/net/app-layer/coap/coap-observe-client.h \
- ../../../os/lib/random.h ../../../os/contiki-net.h ../../../os/contiki.h \
+ ../../../os/contiki-net.h ../../../os/contiki.h \
  ../../../os/net/ipv6/tcpip.h ../../../os/net/ipv6/uip.h \
  ../../../os/net/ipv6/uiplib.h ../../../os/net/ipv6/uip-udp-packet.h \
  ../../../os/net/ipv6/simple-udp.h ../../../os/net/ipv6/uip-nameserver.h \
@@ -101,7 +101,7 @@ build/nrf52840/dongle/obj/capacity.o: capacity.c \
  ../../../arch/cpu/nrf52840/lib/nrf52-sdk/modules/nrfx/drivers/include/nrfx_gpiote.h \
  ../../../arch/cpu/nrf52840/lib/nrf52-sdk/modules/nrfx/hal/nrf_gpiote.h \
  ../../../arch/cpu/nrf52840/lib/nrf52-sdk/modules/nrfx/hal/nrf_gpio.h \
- ../../../os/sys/ctimer.h ../../../os/dev/leds.h
+ ../../../os/sys/ctimer.h ../../../os/dev/leds.h utils/generate_values.h
 
 ../../../os/net/app-layer/coap/module-macros.h:
 
@@ -275,8 +275,6 @@ project-conf.h:
 
 ../../../os/net/app-layer/coap/coap-observe-client.h:
 
-../../../os/lib/random.h:
-
 ../../../os/contiki-net.h:
 
 ../../../os/contiki.h:
@@ -378,3 +376,5 @@ project-conf.h:
 ../../../os/sys/ctimer.h:
 
 ../../../os/dev/leds.h:
+
+utils/generate_values.h:

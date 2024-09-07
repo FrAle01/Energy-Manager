@@ -3,12 +3,13 @@
 #include <string.h>
 #include "contiki.h"
 #include "coap-engine.h"
-#include "random.h"
 #include "contiki-net.h"
 #include "sys/log.h"
 #include "coap-blocking-api.h"
 #include "os/dev/button-hal.h"
 #include "leds.h"
+
+#include "utils/generate_values.h"
 
 #define LOG_MODULE "App"
 #define LOG_LEVEL LOG_LEVEL_APP
@@ -62,6 +63,8 @@ PROCESS_THREAD(energy_process, ev, data){
     int pressed=0;
 
     PROCESS_BEGIN();
+
+    rand_init();
 
     while(ev != button_hal_press_event || pressed==0) {
         pressed=1;

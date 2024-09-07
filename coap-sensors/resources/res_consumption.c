@@ -4,7 +4,6 @@
 #include <time.h>
 #include "coap-engine.h"
 #include <math.h>
-#include "../utils/timestamp.h"
 #include "../utils/generate_values.h"
 
 

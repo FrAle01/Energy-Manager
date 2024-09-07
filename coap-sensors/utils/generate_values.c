@@ -10,8 +10,12 @@
     #define M_PI 3.141592653589793
 #endif
 
+void rand_init(){
+    srand(1234);
+
+}
+
 double get_rand_value(double mean, double std_dev){
-    srand(time(NULL));
 
     double u1 = (double)rand() / RAND_MAX;
     if(u1 < 1e-100) u1 = 1e-100;
