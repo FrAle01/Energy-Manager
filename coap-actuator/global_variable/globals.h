@@ -8,7 +8,4 @@ extern float energy_to_house;
 extern float energy_to_battery;
 extern float energy_to_sell;
 
-extern char newest_ts[20];
-extern char newest_time[9];
-
 #endif

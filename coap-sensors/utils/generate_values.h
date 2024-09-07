@@ -1,8 +1,8 @@
 #ifndef GENERATE_VALUES_H
 #define GENERATE_VALUES_H
 
-const float get_rand_value(float, float);
-const float generate_curr_battery_cap(float, float);
+double get_rand_value(double, double);
+double generate_curr_battery_cap(double, double);
 
 
 #endif

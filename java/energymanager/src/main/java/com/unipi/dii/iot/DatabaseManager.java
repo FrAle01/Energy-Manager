@@ -6,8 +6,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
 
 
 
@@ -95,7 +93,7 @@ public class DatabaseManager{
 
         String createTableSQL = "CREATE TABLE IF NOT EXISTS " + tableName + " ("
                                     + "id INT AUTO_INCREMENT PRIMARY KEY, " 
-                                    + "timestamp VARCHAR(20) NOT NULL, "
+                                    + "timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
                                     + "sensor VARCHAR(50) NOT NULL, "
                                     + "value DOUBLE NOT NULL)"; 
 
@@ -116,7 +114,7 @@ public class DatabaseManager{
 
         String createTableSQL = "CREATE TABLE IF NOT EXISTS " + tableName + " ("
                                     + "id INT AUTO_INCREMENT PRIMARY KEY, " 
-                                    + "timestamp VARCHAR(20) NOT NULL, "
+                                    + "timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
                                     + "produced DOUBLE NOT NULL," 
                                     + "home DOUBLE NOT NULL," 
                                     + "battery DOUBLE NOT NULL," 
@@ -156,19 +154,18 @@ public class DatabaseManager{
         }     
     }
 
-    public boolean  insertSensorValue(String sensor, String address, Double value, String ts){
+    public boolean  insertSensorValue(String sensor, String address, Double value){
 
         address = address.replace(":", "");
         String tableName = sensor +"_"+  address;
         
-        String insertSQL = "INSERT INTO "+tableName+ " (timestamp, sensor, value) VALUES (?, ?, ?)";
+        String insertSQL = "INSERT INTO "+tableName+ " (sensor, value) VALUES (?, ?)";
 
         try {
             Connection conn = dbConnect();
             PreparedStatement pstmt = conn.prepareStatement(insertSQL);
-            pstmt.setString(1, ts);
-            pstmt.setString(2, sensor);
-            pstmt.setDouble(3, value);
+            pstmt.setString(1, sensor);
+            pstmt.setDouble(2, value);
             pstmt.executeUpdate();
             return true;
 
@@ -178,21 +175,20 @@ public class DatabaseManager{
         }
     }
 
-    public boolean  insertFlowValues(String actuator, String address, Double produced, Double home, Double battery, Double grid, String ts){
+    public boolean  insertFlowValues(String actuator, String address, Double produced, Double home, Double battery, Double grid){
 
         address = address.replace(":", "");
         String tableName = actuator +"_"+  address;
         
-        String insertSQL = "INSERT INTO "+tableName+ " (timestamp, produced, home, battery, grid) VALUES (?, ?, ?, ?, ?)";
+        String insertSQL = "INSERT INTO "+tableName+ " (produced, home, battery, grid) VALUES (?, ?, ?, ?)";
 
         try {
             Connection conn = dbConnect();
             PreparedStatement pstmt = conn.prepareStatement(insertSQL);
-            pstmt.setString(1, ts);
-            pstmt.setDouble(2, produced);
-            pstmt.setDouble(3, home);
-            pstmt.setDouble(4, battery);
-            pstmt.setDouble(5, grid);
+            pstmt.setDouble(1, produced);
+            pstmt.setDouble(2, home);
+            pstmt.setDouble(3, battery);
+            pstmt.setDouble(4, grid);
             pstmt.executeUpdate();
             return true;
 

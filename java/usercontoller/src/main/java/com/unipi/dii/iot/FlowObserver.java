@@ -1,6 +1,6 @@
 package com.unipi.dii.iot;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapHandler;
@@ -46,10 +46,8 @@ public class FlowObserver implements Runnable{
                         String str_home =(String) json.get("h");
                         String str_battery =(String) json.get("b");
                         String str_grid =(String) json.get("g");
-                        String hour = (String) json.get("ts");
 
-                        String date = LocalDate.now().toString();
-                        String ts = date + "_" + hour;
+                        String ts = LocalDateTime.now().toString();
 
                         Double to_home = Double.parseDouble(str_home);
                         Double to_battery = Double.parseDouble(str_battery);

@@ -27,17 +27,15 @@ EVENT_RESOURCE(res_temperature,
                res_event_handler);
 
 static float curr_temperature = 0.0f;
-static char temp_str[7] = "0.00";
-static char ts[20];
+static char temp_str[24] = "0.00";
 
 static void res_event_handler(void)
 {
   curr_temperature = get_rand_value(15.0, 15.0);
-  get_timestamp(ts);
-  snprintf(temp_str, 6, "%.2f", curr_temperature);
+  snprintf(temp_str, sizeof(temp_str), "%d.%02d", (int)curr_temperature, (int)abs(((curr_temperature-(int)curr_temperature)*100)));
 
-  LOG_INFO("New temp: %d, in string: %s", (int)curr_temperature, temp_str);
-  LOG_INFO("Payload to be sent: {\"sensor\":\"tm\", \"value\":\"%s\", \"ts\":\"%s\"}\n", temp_str, ts);
+  LOG_INFO("New temp int: %d, dec: %02d, in string: %s", (int)curr_temperature, (int)abs(((curr_temperature-(int)curr_temperature)*100)), temp_str);
+  LOG_INFO("Payload to be sent: {\"sensor\":\"tm\", \"value\":\"%s\"}\n", temp_str);
   coap_notify_observers(&res_temperature);
 }
 
@@ -46,7 +44,7 @@ static void res_get_handler(coap_message_t *request, coap_message_t *response, u
   setlocale(LC_NUMERIC, "C");
 
   coap_set_header_content_format(response, APPLICATION_JSON);
-  int payload_len = snprintf((char *)buffer, preferred_size, "{\"sensor\":\"tm\", \"value\":\"%s\", \"ts\":\"%s\"}\n", temp_str, ts);
+  int payload_len = snprintf((char *)buffer, preferred_size, "{\"sensor\":\"tm\", \"value\":\"%s\"}\n", temp_str);
   coap_set_payload(response, buffer, payload_len);
   LOG_INFO("Preferred size: %d\n", preferred_size);
   LOG_INFO("Payload: %s\n", buffer);

@@ -27,18 +27,16 @@ EVENT_RESOURCE(res_consumption,
                NULL,
                res_event_handler);
 
-static double curr_consumption = 0;
-static char cons_str[7] = "00.00";
-static char ts[20];
+static float curr_consumption = 0.0f;
+static char cons_str[24] = "0.00";
 
 static void res_event_handler(void)
 {
   curr_consumption = fmax(get_rand_value(2.0,1.5), 0.0);
-  get_timestamp(ts);
-  sprintf(cons_str, "%.2f", curr_consumption);
+  snprintf(cons_str, sizeof(cons_str), "%d.%02d", (int)curr_consumption, (int)abs(((curr_consumption-(int)curr_consumption)*100)));
 
 
-  LOG_INFO("Payload to be sent: {\"sensor\":\"cn\", \"value\":\"%s\", \"ts\":\"%s\"}\n", cons_str, ts);
+  LOG_INFO("Payload to be sent: {\"sensor\":\"cn\", \"value\":\"%s\"}\n", cons_str);
   coap_notify_observers(&res_consumption);
 }
 
@@ -47,7 +45,7 @@ static void res_get_handler(coap_message_t *request, coap_message_t *response, u
   setlocale(LC_NUMERIC, "C");
 
   coap_set_header_content_format(response, APPLICATION_JSON);
-  int payload_len = snprintf((char *)buffer, preferred_size, "{\"sensor\":\"cn\", \"value\":\"%s\", \"ts\":\"%s\"}\n", cons_str, ts);
+  int payload_len = snprintf((char *)buffer, preferred_size, "{\"sensor\":\"cn\", \"value\":\"%s\"}\n", cons_str);
   coap_set_payload(response, buffer, payload_len);
 
   LOG_INFO("Payload: %s\n", buffer);

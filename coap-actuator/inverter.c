@@ -11,7 +11,6 @@
 
 #include "utils/my_json.h"
 #include "utils/queue_manager.h"
-#include "utils/timestamp_module.h"
 
 #include "model/IoTmodel.h"
 
@@ -36,6 +35,7 @@
 
 #define MAX_ADDR_REQUEST 3  // max attempts for each address request
 #define ADDR_REQUEST_DELAY 5
+#define MAX_TIME_REQUEST 5
 #define MAX_CAPACITY 12
 
 static char* service_url_temp = "/temperature";
@@ -45,6 +45,7 @@ static char* service_url_cons = "/consumption";
 
 static char* service_url_reg = "/registrationActuator";
 static char* service_url_addr_req = "/addressRequest";
+static char* service_url_ts_req = "/timeRequest";
 
 
 extern coap_resource_t res_batterylimit;
@@ -89,33 +90,37 @@ static Queue irr_queue;
 static Queue cap_queue;
 static Queue cons_queue;
 
-float panel_production = 0;
+static int time_requests = 0;
+static int got_time = 0;
 
+static float day = 0;
+static float month = 0;
+static float hour = 0;
+
+float panel_production = 0;
+ 
 float energy_to_house = 0;
 float energy_to_battery = 0;
 float energy_to_sell = 0;
 
-char newest_ts[20] = "00-00-0000_00:00:00";
-char newest_time[9] = "00:00:00";
 
-
-void save_value(char *sensor, float value, char* timestamp){
+void save_value(char *sensor, float value){
 
     if(strcmp(sensor, "tm") == 0){
-        addToQueue(&temp_queue, value, timestamp);
-        LOG_INFO("Received value :%.2f, for sensor: %s at time: %s\n Queue size:%d", value, sensor, timestamp, temp_queue.count);
+        addToQueue(&temp_queue, value);
+        LOG_INFO("Received value :%.2f, for sensor: %s \n Queue size:%d", value, sensor, temp_queue.count);
 
     }else if (strcmp(sensor, "ir") == 0){
-        addToQueue(&irr_queue, value, timestamp);
-        LOG_INFO("Received value :%.2f, for sensor: %s at time: %s\n Queue size:%d", value, sensor, timestamp, irr_queue.count);
+        addToQueue(&irr_queue, value);
+        LOG_INFO("Received value :%.2f, for sensor: %s \n Queue size:%d", value, sensor, irr_queue.count);
 
     }else if (strcmp(sensor, "cp") == 0){
-        addToQueue(&cap_queue, value, timestamp);
-        LOG_INFO("Received value :%.2f, for sensor: %s at time: %s\n Queue size:%d", value, sensor, timestamp, cap_queue.count);
+        addToQueue(&cap_queue, value);
+        LOG_INFO("Received value :%.2f, for sensor: %s \n Queue size:%d", value, sensor, cap_queue.count);
 
     }else if (strcmp(sensor, "cn") == 0){
-        addToQueue(&cons_queue, value, timestamp);
-        LOG_INFO("Received value :%.2f, for sensor: %s at time: %s\n Queue size:%d", value, sensor, timestamp, cons_queue.count);
+        addToQueue(&cons_queue, value);
+        LOG_INFO("Received value :%.2f, for sensor: %s \n Queue size:%d", value, sensor, cons_queue.count);
 
     }else{
         LOG_INFO("No value inserted");
@@ -137,19 +142,18 @@ void handle_notification(struct coap_observee_s *observee, void *notification, c
 
         char *sensor = json_parse_string((char *)payload, "sensor");
         char *str_value = json_parse_string((char *)payload, "value");
-        char *timestamp = json_parse_string((char *)payload, "ts");
 
         float value = atof(str_value);
 
 
       // verify if the values are valid: sesnor must not be null and value must be greater than 0
-        if (sensor == NULL || value < 0 || timestamp == NULL){
-          LOG_INFO("Invalid sensor, value or timestamp\n");
+        if (sensor == NULL || value < 0){
+          LOG_INFO("Invalid sensor or value\n");
           return;
         }
 
         // call a function to handle the store of the value
-        save_value(sensor, value, timestamp);
+        save_value(sensor, value);
         break;
 
     case OBSERVE_OK:
@@ -207,7 +211,7 @@ void address_response_handler(coap_message_t *response){
     char payload[len + 1];
     strncpy(payload, (char *)chunk, len);
     payload[len] = '\0';
-    printf("Registration payload: %s\n", payload);
+    printf("Addressess request payload: %s\n", payload);
 
     char *sensor = json_parse_string(payload, "sensor");
     char *sensor_ip = json_parse_string(payload, "addr");
@@ -237,6 +241,31 @@ void address_response_handler(coap_message_t *response){
     }
 }
 
+void timestamp_response_handler(coap_message_t *response){
+    if (response == NULL) {
+        printf("No time values received.\n");
+        got_time = 0;
+        return;
+    }
+
+    const uint8_t *chunk;
+    int len = coap_get_payload(response, &chunk);
+    char payload[len + 1];
+    strncpy(payload, (char *)chunk, len);
+    payload[len] = '\0';
+    printf("Timestamp request payload: %s\n", payload);
+
+    month = json_parse_number(payload, "month");
+    day = json_parse_number(payload, "day");
+    hour = json_parse_number(payload, "hour");
+
+    
+
+    time_requests = 0;
+    got_time = 1;
+
+}
+
 
 PROCESS_THREAD(coap_client_process, ev, data) {
     PROCESS_BEGIN();
@@ -251,9 +280,10 @@ PROCESS_THREAD(coap_client_process, ev, data) {
         pressed=1;
         PROCESS_YIELD();
     
-
+        leds_single_on(LEDS_YELLOW);
         while (registration_attempts < REGISTRATION_ATTEMPTS && !registered) {
             leds_on(LEDS_RED);
+            leds_single_off(LEDS_YELLOW);
 
             coap_init_message(request, COAP_TYPE_CON, COAP_POST, 0);
             coap_set_header_uri_path(request, service_url_reg);
@@ -275,7 +305,7 @@ PROCESS_THREAD(coap_client_process, ev, data) {
             leds_on(LEDS_BLUE);
             leds_single_on(LEDS_YELLOW);
 
-            struct etimer address_timer;
+            static struct etimer address_timer;
             //get_sensor_addr("temperature");
 
 
@@ -423,84 +453,104 @@ PROCESS_THREAD(coap_client_process, ev, data) {
                     if(fullQueue(&temp_queue) && fullQueue(&irr_queue) && fullQueue(&cap_queue) && fullQueue(&cons_queue)){
                         LOG_INFO("Calculating new energy distribution\n");
 
-                        float temp_value = getWMean(&temp_queue, 0.8);
-                        LOG_INFO("Using temp mean: %.2f\n", temp_value);
-                        float irr_value = getWMean(&irr_queue, 0.8);
-                        LOG_INFO("Using irr mean: %.2f\n", irr_value);
+                        got_time = 0;
 
-                        float battery_cap = getHead(&cap_queue);
-                        LOG_INFO("And residual battery: %.2f\n", battery_cap);
-                        LOG_INFO("Battery limit setted: %.2f\n", battery_limit);
+                        while(time_requests < MAX_TIME_REQUEST && !got_time){
+                            coap_init_message(request, COAP_TYPE_CON, COAP_POST, 0);
+                            coap_set_header_uri_path(request, service_url_ts_req);
 
-                        float house_consumption = getHead(&cons_queue);
-                        LOG_INFO("With house consumption: %.2f\n", house_consumption);
+                            char *buff = "time";
+                            coap_set_payload(request, (uint8_t *)buff, strlen(buff));
 
+                            printf("Sending time request to server...\n");
+                            COAP_BLOCKING_REQUEST(&server_ep, request, timestamp_response_handler);
 
-                        getRecentTS(newest_ts, &temp_queue, &irr_queue, &cap_queue, &cons_queue);
-                        LOG_INFO("At timestamp %s", newest_ts);
-                        extractTime(newest_time, newest_ts);
-                        LOG_INFO("At time %s", newest_time);
-
-                        float day = extractDay(newest_ts);
-                        float month = extractMonth(newest_ts);
-                        float hour = extractHour(newest_ts);
-
-                        float features[5] = {irr_value, temp_value, hour, day, month};
-
-                        panel_production = IoTmodel_regress1(features, 5);
-                        
-                        float residual_energy = panel_production/100;
-
-                        /*
-                        if(isnan(panel_production)){
-                            residual_energy = 0;
-                        }else{
-                            residual_energy = panel_production;
-                        }
-                        */
-
-                        energy_to_house = 0;
-                        energy_to_battery = 0;
-                        energy_to_sell = 0;
-
-                        if (residual_energy > house_consumption){
-
-                            energy_to_house = house_consumption;
-                            residual_energy -= house_consumption;
-
-                            if(battery_cap >= battery_limit){
-
-                                energy_to_battery = 0;
-                                energy_to_sell = residual_energy;
-                                residual_energy = 0; 
-
-                            }else{
-
-                                energy_to_battery = (battery_limit-battery_cap)/100;
-                                energy_to_battery *= MAX_CAPACITY;
-                                LOG_INFO("Energy to battery calculated: %.2f\n", energy_to_battery);
-
-                                if(residual_energy > energy_to_battery){
-                                    residual_energy -= energy_to_battery;
-                                    energy_to_sell = residual_energy;
-                                    residual_energy = 0;
-                                }else{
-                                    energy_to_battery = residual_energy;
-                                    residual_energy = 0;
-                                    energy_to_sell = 0;
-                                }
-
+                            if (!got_time) {
+                                time_requests++;
+                                etimer_set(&address_timer, CLOCK_SECOND * 1);
+                                PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&address_timer));
                             }
+                        }
+                    
 
-                        }else{
-                            energy_to_house = residual_energy;
-                            residual_energy = 0;
+                        if(got_time){
+
+                            float temp_value = getWMean(&temp_queue, 0.8);
+                            LOG_INFO("Using temp mean: %.2f\n", temp_value);
+                            float irr_value = getWMean(&irr_queue, 0.8);
+                            LOG_INFO("Using irr mean: %.2f\n", irr_value);
+    
+                            float battery_cap = getHead(&cap_queue);
+                            LOG_INFO("And residual battery: %.2f\n", battery_cap);
+                            LOG_INFO("Battery limit setted: %.2f\n", battery_limit);
+    
+                            float house_consumption = getHead(&cons_queue);
+                            LOG_INFO("With house consumption: %.2f\n", house_consumption);
+
+                            LOG_INFO("Data to ml: irr>%d, temp>%d, month>%d, day>%d, hour>%d\n", (int)irr_value, (int)temp_value, (int)month, (int)day, (int)hour);
+
+
+                            float features[5] = {irr_value, temp_value, hour, day, month};
+
+                            panel_production = IoTmodel_regress1(features, 5);
+                            LOG_INFO("Produced: %d\n", (int)panel_production);
+
+                            float residual_energy = panel_production/100;
+
+                            /*
+                            if(isnan(panel_production)){
+                                residual_energy = 0;
+                            }else{
+                                residual_energy = panel_production;
+                            }
+                            */
+
+                            energy_to_house = 0;
                             energy_to_battery = 0;
                             energy_to_sell = 0;
-                        }
 
-                        res_energyflow.trigger();
-                    
+                            if (residual_energy > house_consumption){
+
+                                energy_to_house = house_consumption;
+                                residual_energy -= house_consumption;
+
+                                if(battery_cap >= battery_limit){
+
+                                    energy_to_battery = 0;
+                                    energy_to_sell = residual_energy;
+                                    residual_energy = 0; 
+
+                                }else{
+
+                                    energy_to_battery = (battery_limit-battery_cap)/100;
+                                    energy_to_battery *= MAX_CAPACITY;
+                                    LOG_INFO("Energy to battery calculated: %.2f\n", energy_to_battery);
+
+                                    if(residual_energy > energy_to_battery){
+                                        residual_energy -= energy_to_battery;
+                                        energy_to_sell = residual_energy;
+                                        residual_energy = 0;
+                                    }else{
+                                        energy_to_battery = residual_energy;
+                                        residual_energy = 0;
+                                        energy_to_sell = 0;
+                                    }
+
+                                }
+
+                            }else{
+                                energy_to_house = residual_energy;
+                                residual_energy = 0;
+                                energy_to_battery = 0;
+                                energy_to_sell = 0;
+                            }
+
+                            res_energyflow.trigger();
+                        }else{
+                            printf("Failed to get timestamp from server\n");
+
+                        }
+                        
                     }
                     etimer_reset(&actuator_timer);
 

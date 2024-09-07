@@ -53,7 +53,7 @@ build/cooja/obj/inverter.o: inverter.c \
  ../../../os/net/app-layer/coap/coap-request-state.h \
  ../../../os/dev/leds.h ../../../os/dev/gpio-hal.h \
  ../../../arch/platform/cooja/./dev/gpio-hal-arch.h utils/my_json.h \
- utils/queue_manager.h utils/timestamp_module.h model/IoTmodel.h \
+ utils/queue_manager.h model/IoTmodel.h \
  /home/iot_ubuntu_intel/.local/lib/python3.10/site-packages/emlearn/eml_net.h \
  /home/iot_ubuntu_intel/.local/lib/python3.10/site-packages/emlearn/eml_common.h \
  /home/iot_ubuntu_intel/.local/lib/python3.10/site-packages/emlearn/eml_log.h \
@@ -149,7 +149,6 @@ project-conf.h:
 ../../../arch/platform/cooja/./dev/gpio-hal-arch.h:
 utils/my_json.h:
 utils/queue_manager.h:
-utils/timestamp_module.h:
 model/IoTmodel.h:
 /home/iot_ubuntu_intel/.local/lib/python3.10/site-packages/emlearn/eml_net.h:
 /home/iot_ubuntu_intel/.local/lib/python3.10/site-packages/emlearn/eml_common.h:

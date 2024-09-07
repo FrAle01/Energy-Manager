@@ -6,18 +6,16 @@
 
 typedef struct{
     double values[QUEUE_SIZE];
-    char ts[QUEUE_SIZE][TS_SIZE];
     int head;
     int count;
 
 } Queue;
 
 void initQueue(Queue*);
-void addToQueue(Queue*, double, char*);
+void addToQueue(Queue*, double);
 int fullQueue(Queue*);
 float getWMean(Queue*, float);
 float getHead(Queue*);
-void getRecentTS(char*, Queue*, Queue*, Queue*, Queue*);
 
 
 #endif

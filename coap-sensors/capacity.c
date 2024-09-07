@@ -71,7 +71,7 @@ PROCESS_THREAD(battery_process, ev, data){
     coap_endpoint_parse(SERVER_EP, strlen(SERVER_EP), &server_ep);
     while (registration_retry_count < MAX_REGISTRATION_RETRY && registered == 0) {
         // Initialize POST request
-            leds_on(LEDS_RED);
+        leds_on(LEDS_RED);
         leds_single_on(LEDS_YELLOW);
 
         coap_init_message(request, COAP_TYPE_CON, COAP_POST, 0);
